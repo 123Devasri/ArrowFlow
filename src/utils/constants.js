@@ -3,9 +3,9 @@
  * Beginners-friendly configuration file for grid sizes, directions, and game states.
  */
 
-// Default Grid Dimensions
-export const GRID_ROWS = 6;
-export const GRID_COLS = 6;
+// 5x5 Grid Dimensions
+export const GRID_ROWS = 5;
+export const GRID_COLS = 5;
 
 // Arrow Direction Enum
 export const DIRECTIONS = {
@@ -13,6 +13,23 @@ export const DIRECTIONS = {
   RIGHT: 'RIGHT',
   DOWN: 'DOWN',
   LEFT: 'LEFT',
+};
+
+// Direction cycle order on tile click: null -> UP -> RIGHT -> DOWN -> LEFT -> null
+export const DIRECTION_CYCLE = [
+  null,
+  DIRECTIONS.UP,
+  DIRECTIONS.RIGHT,
+  DIRECTIONS.DOWN,
+  DIRECTIONS.LEFT,
+];
+
+// CSS Rotation degrees for each direction arrow
+export const DIRECTION_ROTATION = {
+  [DIRECTIONS.UP]: 0,
+  [DIRECTIONS.RIGHT]: 90,
+  [DIRECTIONS.DOWN]: 180,
+  [DIRECTIONS.LEFT]: 270,
 };
 
 // Direction vector offsets (row change, col change)

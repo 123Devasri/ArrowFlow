@@ -1,12 +1,12 @@
 import React from 'react';
 import Header from './components/Header';
-import GameBoardPlaceholder from './components/GameBoardPlaceholder';
+import GameBoard from './components/GameBoard';
 import ControlPanel from './components/ControlPanel';
 import './css/App.css';
 
 /**
  * Main Arrow Flow Application Component.
- * Integrates the Header, Game Board Canvas, and Control Panel into a dark UI structure.
+ * Integrates the Header, 5x5 GameBoard, and ControlPanel.
  */
 export default function App() {
   return (
@@ -14,7 +14,7 @@ export default function App() {
       <Header />
       
       <main className="main-content">
-        <GameBoardPlaceholder />
+        <GameBoard />
         <ControlPanel />
       </main>
 
