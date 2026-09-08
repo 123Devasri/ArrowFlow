@@ -2,11 +2,11 @@
  * Arrow Flow Helper Utilities
  * Helper functions for grid generation and coordinate validation.
  */
-import { GRID_ROWS, GRID_COLS, DIRECTIONS, DIRECTION_CYCLE, DIRECTION_ROTATION } from './constants';
+import { GRID_ROWS, GRID_COLS, DIRECTIONS, DIRECTION_CYCLE } from './constants';
 
 /**
  * Creates an initial 5x5 grid matrix.
- * Set Start tile at (0, 0) and Target tile at (4, 4).
+ * Set Start tile at (0, 0) pointing RIGHT and Target tile at (4, 4).
  * @returns {Array<Array<Object>>} 2D array representing grid tiles.
  */
 export function createEmptyGrid(rows = GRID_ROWS, cols = GRID_COLS) {
@@ -20,8 +20,9 @@ export function createEmptyGrid(rows = GRID_ROWS, cols = GRID_COLS) {
       row.push({
         row: r,
         col: c,
-        arrow: null, // Direction string ('UP', 'RIGHT', 'DOWN', 'LEFT') or null for empty
-        rotationDegrees: 0, // Cumulative rotation angle for smooth animation
+        // Start tile points RIGHT initially to start the flow path
+        arrow: isStart ? DIRECTIONS.RIGHT : null,
+        rotationDegrees: 0,
         isStart,
         isTarget,
         visited: false,

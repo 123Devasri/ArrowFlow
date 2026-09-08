@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Tile from './Tile';
-import { GRID_ROWS, GRID_COLS, DIRECTIONS } from '../utils/constants';
+import { GRID_ROWS, GRID_COLS } from '../utils/constants';
 import { createEmptyGrid, getNextClockwiseDirection } from '../utils/helpers';
-import { MousePointerClick, RotateCcw } from 'lucide-react';
+import { calculateFlowPath } from '../algorithms/pathfinding';
+import { MousePointerClick, RotateCcw, Sparkles, AlertCircle } from 'lucide-react';
 import '../css/GameBoard.css';
 
 /**
- * Reusable GameBoard component managing the 5x5 Arrow Flow grid state.
+ * Reusable GameBoard component managing 5x5 matrix state and path traversal execution.
  */
 export default function GameBoard() {
   // Store board tiles in React state
   const [grid, setGrid] = useState(() => createEmptyGrid(GRID_ROWS, GRID_COLS));
+
+  /**
+   * Recalculate path traversal whenever grid state changes.
+   * Path calculation is kept completely separate in pathfinding.js utility.
+   */
+  const flowResult = useMemo(() => {
+    return calculateFlowPath(grid);
+  }, [grid]);
 
   /**
    * Click handler to rotate arrow clockwise (+90°) on regular tiles.
@@ -63,23 +72,52 @@ export default function GameBoard() {
         </button>
       </div>
 
+      {/* Status Bar showing live path calculation metrics */}
+      <div className="flow-status-bar">
+        {flowResult.reachedTarget ? (
+          <div className="status-pill status-success">
+            <Sparkles size={15} />
+            <span>Target Reached! ({flowResult.path.length} Tiles)</span>
+          </div>
+        ) : flowResult.stopReason === 'LOOP' ? (
+          <div className="status-pill status-warning">
+            <AlertCircle size={15} />
+            <span>Loop Detected</span>
+          </div>
+        ) : flowResult.stopReason === 'OUT_OF_BOUNDS' ? (
+          <div className="status-pill status-muted">
+            <span>Path Left Board ({flowResult.path.length} Tiles)</span>
+          </div>
+        ) : (
+          <div className="status-pill status-info">
+            <span>Path Length: {flowResult.path.length} Tiles</span>
+          </div>
+        )}
+      </div>
+
       {/* 5x5 Responsive Grid Canvas */}
       <div className="grid-5x5-canvas">
         {grid.map((row) =>
-          row.map((tile) => (
-            <Tile
-              key={`${tile.row}-${tile.col}`}
-              tile={tile}
-              onTileClick={handleTileClick}
-            />
-          ))
+          row.map((tile) => {
+            const tileKey = `${tile.row}-${tile.col}`;
+            const isReachable = flowResult.pathSet.has(tileKey);
+
+            return (
+              <Tile
+                key={tileKey}
+                tile={tile}
+                isReachable={isReachable}
+                onTileClick={handleTileClick}
+              />
+            );
+          })
         )}
       </div>
 
       <div className="board-hint-bar">
         <div className="hint-text">
           <MousePointerClick size={15} />
-          <span>Click any tile to rotate clockwise (↑ → ↓ ←)</span>
+          <span>Click any tile to rotate arrow and extend the flow path</span>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUp, Play, Target } from 'lucide-react';
+import { ArrowUp, Play, Target, CheckCircle2 } from 'lucide-react';
 import '../css/Tile.css';
 
 /**
@@ -7,9 +7,10 @@ import '../css/Tile.css';
  * 
  * @param {Object} props
  * @param {Object} props.tile Tile state object ({ row, col, arrow, rotationDegrees, isStart, isTarget })
+ * @param {boolean} props.isReachable Whether this tile is in the active flow path
  * @param {Function} props.onTileClick Callback when tile is clicked
  */
-export default function Tile({ tile, onTileClick }) {
+export default function Tile({ tile, isReachable, onTileClick }) {
   const { row, col, arrow, rotationDegrees, isStart, isTarget } = tile;
 
   // Determine CSS classes for special styling
@@ -17,6 +18,7 @@ export default function Tile({ tile, onTileClick }) {
   if (isStart) classNames += ' is-start is-special';
   if (isTarget) classNames += ' is-target is-special';
   if (arrow) classNames += ' has-arrow';
+  if (isReachable) classNames += ' is-reachable';
 
   return (
     <button
@@ -31,8 +33,12 @@ export default function Tile({ tile, onTileClick }) {
         </>
       ) : isTarget ? (
         <>
-          <Target className="tile-icon" size={24} />
-          <span className="tile-label-badge">GOAL</span>
+          {isReachable ? (
+            <CheckCircle2 className="tile-icon" size={24} />
+          ) : (
+            <Target className="tile-icon" size={24} />
+          )}
+          <span className="tile-label-badge">{isReachable ? 'GOAL!' : 'GOAL'}</span>
         </>
       ) : arrow ? (
         <div
