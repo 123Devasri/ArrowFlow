@@ -1,7 +1,7 @@
 /* Game Board Container & Grid Layout Styles */
 .game-board-container {
   width: 100%;
-  max-width: 540px;
+  max-width: 560px;
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 20px;
@@ -18,6 +18,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .board-title-group {
@@ -41,6 +43,40 @@
   padding: 0.25rem 0.65rem;
   border-radius: 8px;
   border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+/* Minimal Difficulty Selector Tabs */
+.difficulty-selector-group {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-dark);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  gap: 2px;
+}
+
+.btn-difficulty {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+.btn-difficulty:hover {
+  color: var(--text-primary);
+}
+
+.btn-difficulty.active {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
 }
 
 /* Header Stat Badges (Moves & Timer) */
@@ -208,7 +244,7 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-/* 5x5 Responsive CSS Grid Canvas */
+/* Dynamic CSS Grid Canvas (Adapts to --grid-cols and --grid-rows) */
 .grid-5x5-canvas {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -216,10 +252,10 @@
   border: 1.5px solid var(--border-color);
   border-radius: 16px;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(5, 1fr);
-  gap: 10px;
-  padding: 14px;
+  grid-template-columns: repeat(var(--grid-cols, 5), 1fr);
+  grid-template-rows: repeat(var(--grid-rows, 5), 1fr);
+  gap: 8px;
+  padding: 12px;
   box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 

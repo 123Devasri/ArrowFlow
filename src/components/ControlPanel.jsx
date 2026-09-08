@@ -4,13 +4,14 @@ import { formatTime } from '../utils/helpers';
 import '../css/ControlPanel.css';
 
 /**
- * Control toolbar component displaying live move stats, timer toggle, and status.
+ * Control toolbar component displaying live move stats, timer toggle, difficulty, and status.
  */
 export default function ControlPanel({
   moveCount = 0,
   elapsedSeconds = 0,
   isTimerEnabled = true,
   gameStatus = 'IDLE',
+  difficultyLabel = 'Medium',
   onReset,
   onToggleTimer,
 }) {
@@ -37,6 +38,11 @@ export default function ControlPanel({
         </div>
 
         <div className="stats-card-group">
+          <div className="stat-chip">
+            <span className="stat-label">Mode</span>
+            <span className="stat-value">{difficultyLabel}</span>
+          </div>
+
           <div className="stat-chip">
             <span className="stat-label">Moves</span>
             <span className="stat-value">{moveCount}</span>

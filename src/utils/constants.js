@@ -1,9 +1,34 @@
 /**
  * Arrow Flow Constants
- * Beginners-friendly configuration file for grid sizes, directions, and game states.
+ * Beginners-friendly configuration file for grid sizes, directions, game states, and difficulties.
  */
 
-// 5x5 Grid Dimensions
+// Difficulty Configurations
+export const DIFFICULTY_LEVELS = {
+  EASY: {
+    key: 'EASY',
+    label: 'Easy',
+    rows: 4,
+    cols: 4,
+    description: '4×4 board with simple direct paths',
+  },
+  MEDIUM: {
+    key: 'MEDIUM',
+    label: 'Medium',
+    rows: 5,
+    cols: 5,
+    description: '5×5 board with balanced paths & misleading arrows',
+  },
+  HARD: {
+    key: 'HARD',
+    label: 'Hard',
+    rows: 6,
+    cols: 6,
+    description: '6×6 board with complex winding paths',
+  },
+};
+
+// Default Grid Dimensions (Medium fallback)
 export const GRID_ROWS = 5;
 export const GRID_COLS = 5;
 
