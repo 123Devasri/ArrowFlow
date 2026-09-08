@@ -1,22 +1,20 @@
 import React from 'react';
-import { Play, RotateCcw, Sliders, Layers } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import '../css/ControlPanel.css';
 
 /**
- * Control toolbar component placeholder with game controls and metrics.
+ * Control toolbar component displaying live move stats and status.
  */
-export default function ControlPanel() {
+export default function ControlPanel({ moveCount = 0, gameStatus = 'IDLE', onReset }) {
+  const isSolved = gameStatus === 'SOLVED';
+
   return (
     <div className="control-panel-container">
       <div className="panel-row">
         <div className="action-buttons">
-          <button className="btn btn-primary" title="Start Flow Simulation">
-            <Play size={16} />
-            <span>Start Flow</span>
-          </button>
-          <button className="btn btn-secondary" title="Reset Grid">
+          <button className="btn btn-secondary" onClick={onReset} title="Reset Grid & Moves">
             <RotateCcw size={16} />
-            <span>Reset</span>
+            <span>Reset Board</span>
           </button>
         </div>
 
@@ -27,11 +25,18 @@ export default function ControlPanel() {
           </div>
           <div className="stat-chip">
             <span className="stat-label">Moves</span>
-            <span className="stat-value">0</span>
+            <span className="stat-value">{moveCount}</span>
           </div>
           <div className="stat-chip">
             <span className="stat-label">Status</span>
-            <span className="stat-value" style={{ color: 'var(--accent-indigo)' }}>Idle</span>
+            <span
+              className="stat-value"
+              style={{
+                color: isSolved ? 'var(--accent-emerald)' : 'var(--accent-cyan)',
+              }}
+            >
+              {isSolved ? 'SOLVED' : 'ACTIVE'}
+            </span>
           </div>
         </div>
       </div>

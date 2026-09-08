@@ -1,17 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Tile from './Tile';
 import { GRID_ROWS, GRID_COLS } from '../utils/constants';
 import { createEmptyGrid, getNextClockwiseDirection } from '../utils/helpers';
 import { calculateFlowPath } from '../algorithms/pathfinding';
-import { MousePointerClick, RotateCcw, Sparkles, AlertCircle, Trophy, RefreshCw } from 'lucide-react';
+import { MousePointerClick, RotateCcw, AlertCircle, Trophy, RefreshCw, Footprints } from 'lucide-react';
 import '../css/GameBoard.css';
 
 /**
- * Reusable GameBoard component managing matrix state, path traversal, and win detection.
+ * Reusable GameBoard component managing matrix state, path traversal, win detection, and move counting.
  */
-export default function GameBoard() {
+export default function GameBoard({ onMoveCountChange, onGameStatusChange }) {
   // Store board tiles in React state
   const [grid, setGrid] = useState(() => createEmptyGrid(GRID_ROWS, GRID_COLS));
+  // Simple move counter state
+  const [moveCount, setMoveCount] = useState(0);
 
   /**
    * Recalculate path traversal whenever grid state changes.
@@ -23,13 +25,21 @@ export default function GameBoard() {
 
   const isWon = flowResult.reachedTarget;
 
+  // Sync parent component callbacks if provided
+  useEffect(() => {
+    if (onMoveCountChange) onMoveCountChange(moveCount);
+    if (onGameStatusChange) onGameStatusChange(isWon ? 'SOLVED' : 'IDLE');
+  }, [moveCount, isWon, onMoveCountChange, onGameStatusChange]);
+
   /**
    * Click handler to rotate arrow clockwise (+90°) on regular tiles.
-   * Pauses board tile interaction when the puzzle is solved.
+   * Increments move counter by 1 on every valid tile rotation.
    */
   const handleTileClick = (row, col) => {
     // Pause board tile interaction once the goal is reached
     if (isWon) return;
+
+    let tileRotated = false;
 
     setGrid((prevGrid) =>
       prevGrid.map((r, rIdx) =>
@@ -37,6 +47,8 @@ export default function GameBoard() {
           if (rIdx === row && cIdx === col) {
             // Ignore click on Start or Target tiles
             if (tile.isStart || tile.isTarget) return tile;
+
+            tileRotated = true;
 
             // Determine next clockwise direction: UP -> RIGHT -> DOWN -> LEFT -> UP
             const nextArrow = getNextClockwiseDirection(tile.arrow);
@@ -54,13 +66,19 @@ export default function GameBoard() {
         })
       )
     );
+
+    // Increment move count if a valid tile was rotated
+    if (tileRotated) {
+      setMoveCount((prev) => prev + 1);
+    }
   };
 
   /**
-   * Resets all placed arrows back to initial empty grid and resumes gameplay.
+   * Resets all placed arrows back to initial empty grid and resets move counter.
    */
   const handleReset = () => {
     setGrid(createEmptyGrid(GRID_ROWS, GRID_COLS));
+    setMoveCount(0);
   };
 
   return (
@@ -71,7 +89,13 @@ export default function GameBoard() {
           <span className="board-badge">{GRID_ROWS} × {GRID_COLS}</span>
         </div>
 
-        <button className="btn-text-reset" onClick={handleReset} title="Clear board">
+        {/* Move Counter Display at Top of Game */}
+        <div className="move-counter-badge" title="Current Move Count">
+          <Footprints size={15} style={{ color: 'var(--accent-cyan)' }} />
+          <span>Moves:</span> {moveCount}
+        </div>
+
+        <button className="btn-text-reset" onClick={handleReset} title="Clear board & reset moves">
           <RotateCcw size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
           Reset Board
         </button>
@@ -86,7 +110,7 @@ export default function GameBoard() {
             </div>
             <div>
               <h3 className="completion-title">Flow Complete!</h3>
-              <p className="completion-sub">Path connected in {flowResult.path.length} steps</p>
+              <p className="completion-sub">Solved in {moveCount} {moveCount === 1 ? 'move' : 'moves'} ({flowResult.path.length} tiles)</p>
             </div>
           </div>
 
@@ -139,7 +163,7 @@ export default function GameBoard() {
           <MousePointerClick size={15} />
           <span>
             {isWon
-              ? 'Puzzle solved! Click "Play Again" to restart'
+              ? `Puzzle solved in ${moveCount} moves! Click "Play Again" to restart`
               : 'Click any tile to rotate arrow and extend the flow path'}
           </span>
         </div>

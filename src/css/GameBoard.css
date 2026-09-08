@@ -43,6 +43,25 @@
   border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
+/* Move Counter Badge in Board Header */
+.move-counter-badge {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background-color: var(--bg-dark);
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.move-counter-badge span {
+  color: var(--accent-cyan);
+}
+
 /* Minimal Completion Banner Card */
 .completion-card {
   width: 100%;
