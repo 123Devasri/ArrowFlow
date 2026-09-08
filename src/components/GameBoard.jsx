@@ -1,14 +1,16 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Tile from './Tile';
+import AlgorithmInfo from './AlgorithmInfo';
 import { DIFFICULTY_LEVELS } from '../utils/constants';
 import { getNextClockwiseDirection, formatTime } from '../utils/helpers';
 import { generateSolvableGrid } from '../utils/boardGenerator';
 import { calculateFlowPath } from '../algorithms/pathfinding';
+import { solveBFS } from '../algorithms/bfs';
 import { MousePointerClick, RotateCcw, AlertCircle, Trophy, RefreshCw, Footprints, Timer, Dices } from 'lucide-react';
 import '../css/GameBoard.css';
 
 /**
- * Reusable GameBoard component managing matrix state, path traversal, win detection, move counting, timer, and difficulty options.
+ * Reusable GameBoard component managing matrix state, BFS graph traversal, win detection, move counting, timer, and difficulty options.
  */
 export default function GameBoard({
   isTimerEnabled = true,
@@ -36,10 +38,16 @@ export default function GameBoard({
 
   /**
    * Recalculate path traversal whenever grid state changes.
-   * Win detection occurs when flowResult.reachedTarget is true.
    */
   const flowResult = useMemo(() => {
     return calculateFlowPath(grid, { row: 0, col: 0 }, { row: diffConfig.rows - 1, col: diffConfig.cols - 1 });
+  }, [grid, diffConfig]);
+
+  /**
+   * Execute Breadth-First Search (BFS) algorithm to analyze target reachability & graph structure.
+   */
+  const bfsResult = useMemo(() => {
+    return solveBFS(grid, { row: 0, col: 0 }, { row: diffConfig.rows - 1, col: diffConfig.cols - 1 });
   }, [grid, diffConfig]);
 
   const isWon = flowResult.reachedTarget;
@@ -264,6 +272,9 @@ export default function GameBoard({
           </span>
         </div>
       </div>
+
+      {/* Developer-Friendly Algorithm Information Section */}
+      <AlgorithmInfo bfsResult={bfsResult} />
     </div>
   );
 }
