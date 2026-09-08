@@ -6,11 +6,17 @@ import './css/App.css';
 
 /**
  * Main Arrow Flow Application Component.
- * Integrates the Header, 5x5 GameBoard, and ControlPanel.
+ * Integrates Header, 5x5 GameBoard, and ControlPanel with timer toggle settings.
  */
 export default function App() {
   const [moveCount, setMoveCount] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isTimerEnabled, setIsTimerEnabled] = useState(true);
   const [gameStatus, setGameStatus] = useState('IDLE');
+
+  const handleToggleTimer = () => {
+    setIsTimerEnabled((prev) => !prev);
+  };
 
   return (
     <div className="app-container">
@@ -18,12 +24,17 @@ export default function App() {
       
       <main className="main-content">
         <GameBoard
+          isTimerEnabled={isTimerEnabled}
           onMoveCountChange={setMoveCount}
+          onElapsedTimeChange={setElapsedSeconds}
           onGameStatusChange={setGameStatus}
         />
         <ControlPanel
           moveCount={moveCount}
+          elapsedSeconds={elapsedSeconds}
+          isTimerEnabled={isTimerEnabled}
           gameStatus={gameStatus}
+          onToggleTimer={handleToggleTimer}
         />
       </main>
 

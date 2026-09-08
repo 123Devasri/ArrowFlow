@@ -1,19 +1,26 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Tile from './Tile';
 import { GRID_ROWS, GRID_COLS } from '../utils/constants';
-import { createEmptyGrid, getNextClockwiseDirection } from '../utils/helpers';
+import { createEmptyGrid, getNextClockwiseDirection, formatTime } from '../utils/helpers';
 import { calculateFlowPath } from '../algorithms/pathfinding';
-import { MousePointerClick, RotateCcw, AlertCircle, Trophy, RefreshCw, Footprints } from 'lucide-react';
+import { MousePointerClick, RotateCcw, AlertCircle, Trophy, RefreshCw, Footprints, Timer } from 'lucide-react';
 import '../css/GameBoard.css';
 
 /**
- * Reusable GameBoard component managing matrix state, path traversal, win detection, and move counting.
+ * Reusable GameBoard component managing matrix state, path traversal, win detection, move counting, and optional timer.
  */
-export default function GameBoard({ onMoveCountChange, onGameStatusChange }) {
+export default function GameBoard({
+  isTimerEnabled = true,
+  onMoveCountChange,
+  onGameStatusChange,
+  onElapsedTimeChange,
+}) {
   // Store board tiles in React state
   const [grid, setGrid] = useState(() => createEmptyGrid(GRID_ROWS, GRID_COLS));
   // Simple move counter state
   const [moveCount, setMoveCount] = useState(0);
+  // Elapsed time state in seconds
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   /**
    * Recalculate path traversal whenever grid state changes.
@@ -25,11 +32,27 @@ export default function GameBoard({ onMoveCountChange, onGameStatusChange }) {
 
   const isWon = flowResult.reachedTarget;
 
+  // Zero-dependency Timer Effect: Ticks every second while timer is enabled and puzzle is active
+  useEffect(() => {
+    let interval = null;
+
+    if (isTimerEnabled && !isWon) {
+      interval = setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTimerEnabled, isWon]);
+
   // Sync parent component callbacks if provided
   useEffect(() => {
     if (onMoveCountChange) onMoveCountChange(moveCount);
     if (onGameStatusChange) onGameStatusChange(isWon ? 'SOLVED' : 'IDLE');
-  }, [moveCount, isWon, onMoveCountChange, onGameStatusChange]);
+    if (onElapsedTimeChange) onElapsedTimeChange(elapsedSeconds);
+  }, [moveCount, isWon, elapsedSeconds, onMoveCountChange, onGameStatusChange, onElapsedTimeChange]);
 
   /**
    * Click handler to rotate arrow clockwise (+90°) on regular tiles.
@@ -74,11 +97,12 @@ export default function GameBoard({ onMoveCountChange, onGameStatusChange }) {
   };
 
   /**
-   * Resets all placed arrows back to initial empty grid and resets move counter.
+   * Resets all placed arrows back to initial empty grid, move counter, and timer.
    */
   const handleReset = () => {
     setGrid(createEmptyGrid(GRID_ROWS, GRID_COLS));
     setMoveCount(0);
+    setElapsedSeconds(0);
   };
 
   return (
@@ -89,15 +113,24 @@ export default function GameBoard({ onMoveCountChange, onGameStatusChange }) {
           <span className="board-badge">{GRID_ROWS} × {GRID_COLS}</span>
         </div>
 
-        {/* Move Counter Display at Top of Game */}
-        <div className="move-counter-badge" title="Current Move Count">
-          <Footprints size={15} style={{ color: 'var(--accent-cyan)' }} />
-          <span>Moves:</span> {moveCount}
+        {/* Move Counter & Optional Timer Displays at Top of Game */}
+        <div className="header-stats-group">
+          <div className="move-counter-badge" title="Current Move Count">
+            <Footprints size={15} style={{ color: 'var(--accent-cyan)' }} />
+            <span>Moves:</span> {moveCount}
+          </div>
+
+          {isTimerEnabled && (
+            <div className="timer-badge" title="Elapsed Time">
+              <Timer size={15} style={{ color: 'var(--accent-indigo)' }} />
+              <span>Time:</span> {formatTime(elapsedSeconds)}
+            </div>
+          )}
         </div>
 
-        <button className="btn-text-reset" onClick={handleReset} title="Clear board & reset moves">
+        <button className="btn-text-reset" onClick={handleReset} title="Clear board & reset">
           <RotateCcw size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-          Reset Board
+          Reset
         </button>
       </div>
 
@@ -110,7 +143,10 @@ export default function GameBoard({ onMoveCountChange, onGameStatusChange }) {
             </div>
             <div>
               <h3 className="completion-title">Flow Complete!</h3>
-              <p className="completion-sub">Solved in {moveCount} {moveCount === 1 ? 'move' : 'moves'} ({flowResult.path.length} tiles)</p>
+              <p className="completion-sub">
+                Solved in {moveCount} {moveCount === 1 ? 'move' : 'moves'}
+                {isTimerEnabled ? ` (${formatTime(elapsedSeconds)})` : ''}
+              </p>
             </div>
           </div>
 
@@ -163,7 +199,7 @@ export default function GameBoard({ onMoveCountChange, onGameStatusChange }) {
           <MousePointerClick size={15} />
           <span>
             {isWon
-              ? `Puzzle solved in ${moveCount} moves! Click "Play Again" to restart`
+              ? `Puzzle solved! Click "Play Again" to restart`
               : 'Click any tile to rotate arrow and extend the flow path'}
           </span>
         </div>

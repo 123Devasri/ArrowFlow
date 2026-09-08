@@ -43,8 +43,15 @@
   border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
-/* Move Counter Badge in Board Header */
-.move-counter-badge {
+/* Header Stat Badges (Moves & Timer) */
+.header-stats-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.move-counter-badge,
+.timer-badge {
   font-family: var(--font-mono);
   font-size: 0.82rem;
   font-weight: 700;
@@ -56,6 +63,15 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+.timer-badge {
+  border-color: rgba(99, 102, 241, 0.4);
+  color: var(--text-primary);
+}
+
+.timer-badge span {
+  color: var(--accent-indigo);
 }
 
 .move-counter-badge span {

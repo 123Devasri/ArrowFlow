@@ -1,6 +1,6 @@
 /**
  * Arrow Flow Helper Utilities
- * Helper functions for grid generation and coordinate validation.
+ * Helper functions for grid generation, coordinate validation, and time formatting.
  */
 import { GRID_ROWS, GRID_COLS, DIRECTIONS, DIRECTION_CYCLE } from './constants';
 
@@ -20,7 +20,6 @@ export function createEmptyGrid(rows = GRID_ROWS, cols = GRID_COLS) {
       row.push({
         row: r,
         col: c,
-        // Start tile points RIGHT initially to start the flow path
         arrow: isStart ? DIRECTIONS.RIGHT : null,
         rotationDegrees: 0,
         isStart,
@@ -42,6 +41,16 @@ export function getNextClockwiseDirection(currentDirection) {
   const currentIndex = DIRECTION_CYCLE.indexOf(currentDirection);
   const nextIndex = (currentIndex + 1) % DIRECTION_CYCLE.length;
   return DIRECTION_CYCLE[nextIndex];
+}
+
+/**
+ * Formats seconds into MM:SS string display (e.g. 65 -> "01:05").
+ */
+export function formatTime(totalSeconds = 0) {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  const pad = (num) => String(num).padStart(2, '0');
+  return `${pad(mins)}:${pad(secs)}`;
 }
 
 /**
