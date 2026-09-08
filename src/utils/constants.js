@@ -15,16 +15,15 @@ export const DIRECTIONS = {
   LEFT: 'LEFT',
 };
 
-// Direction cycle order on tile click: null -> UP -> RIGHT -> DOWN -> LEFT -> null
+// Clockwise Direction Cycle Order
 export const DIRECTION_CYCLE = [
-  null,
   DIRECTIONS.UP,
   DIRECTIONS.RIGHT,
   DIRECTIONS.DOWN,
   DIRECTIONS.LEFT,
 ];
 
-// CSS Rotation degrees for each direction arrow
+// Base Rotation angles in degrees for each direction
 export const DIRECTION_ROTATION = {
   [DIRECTIONS.UP]: 0,
   [DIRECTIONS.RIGHT]: 90,

@@ -2,7 +2,7 @@
  * Arrow Flow Helper Utilities
  * Helper functions for grid generation and coordinate validation.
  */
-import { GRID_ROWS, GRID_COLS, DIRECTION_CYCLE } from './constants';
+import { GRID_ROWS, GRID_COLS, DIRECTIONS, DIRECTION_CYCLE, DIRECTION_ROTATION } from './constants';
 
 /**
  * Creates an initial 5x5 grid matrix.
@@ -20,7 +20,8 @@ export function createEmptyGrid(rows = GRID_ROWS, cols = GRID_COLS) {
       row.push({
         row: r,
         col: c,
-        arrow: null, // Direction string ('UP', 'RIGHT', etc.) or null for empty space
+        arrow: null, // Direction string ('UP', 'RIGHT', 'DOWN', 'LEFT') or null for empty
+        rotationDegrees: 0, // Cumulative rotation angle for smooth animation
         isStart,
         isTarget,
         visited: false,
@@ -32,10 +33,11 @@ export function createEmptyGrid(rows = GRID_ROWS, cols = GRID_COLS) {
 }
 
 /**
- * Returns the next arrow direction when a tile is clicked.
- * Cycles: null -> UP -> RIGHT -> DOWN -> LEFT -> null
+ * Calculates the next direction in clockwise order (UP -> RIGHT -> DOWN -> LEFT -> UP).
+ * Also handles initial click on an empty tile (defaults to UP).
  */
-export function getNextDirection(currentDirection) {
+export function getNextClockwiseDirection(currentDirection) {
+  if (!currentDirection) return DIRECTIONS.UP;
   const currentIndex = DIRECTION_CYCLE.indexOf(currentDirection);
   const nextIndex = (currentIndex + 1) % DIRECTION_CYCLE.length;
   return DIRECTION_CYCLE[nextIndex];

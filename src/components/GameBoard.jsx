@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import Tile from './Tile';
-import { GRID_ROWS, GRID_COLS } from '../utils/constants';
-import { createEmptyGrid, getNextDirection } from '../utils/helpers';
+import { GRID_ROWS, GRID_COLS, DIRECTIONS } from '../utils/constants';
+import { createEmptyGrid, getNextClockwiseDirection } from '../utils/helpers';
 import { MousePointerClick, RotateCcw } from 'lucide-react';
 import '../css/GameBoard.css';
 
 /**
- * Reusable GameBoard component representing the 5x5 Arrow Flow grid matrix.
+ * Reusable GameBoard component managing the 5x5 Arrow Flow grid state.
  */
 export default function GameBoard() {
-  // Simple React state holding the 2D grid of tiles
+  // Store board tiles in React state
   const [grid, setGrid] = useState(() => createEmptyGrid(GRID_ROWS, GRID_COLS));
 
   /**
-   * Click handler to cycle arrow direction on a regular tile.
-   * Start and Target tiles remain fixed.
+   * Click handler to rotate arrow clockwise (+90°) on regular tiles.
+   * Start and Target tiles remain fixed anchor points.
    */
   const handleTileClick = (row, col) => {
     setGrid((prevGrid) =>
@@ -24,10 +24,16 @@ export default function GameBoard() {
             // Ignore click on Start or Target tiles
             if (tile.isStart || tile.isTarget) return tile;
 
-            // Cycle arrow direction: empty -> UP -> RIGHT -> DOWN -> LEFT -> empty
+            // Determine next clockwise direction: UP -> RIGHT -> DOWN -> LEFT -> UP
+            const nextArrow = getNextClockwiseDirection(tile.arrow);
+
+            // Calculate new rotation angle (+90deg clockwise)
+            const nextDegrees = tile.arrow !== null ? tile.rotationDegrees + 90 : 0;
+
             return {
               ...tile,
-              arrow: getNextDirection(tile.arrow),
+              arrow: nextArrow,
+              rotationDegrees: nextDegrees,
             };
           }
           return tile;
@@ -37,7 +43,7 @@ export default function GameBoard() {
   };
 
   /**
-   * Resets all placed arrows on the grid back to empty state.
+   * Resets all placed arrows back to initial empty grid.
    */
   const handleReset = () => {
     setGrid(createEmptyGrid(GRID_ROWS, GRID_COLS));
@@ -57,7 +63,7 @@ export default function GameBoard() {
         </button>
       </div>
 
-      {/* 5x5 Responsive Grid Matrix */}
+      {/* 5x5 Responsive Grid Canvas */}
       <div className="grid-5x5-canvas">
         {grid.map((row) =>
           row.map((tile) => (
@@ -73,7 +79,7 @@ export default function GameBoard() {
       <div className="board-hint-bar">
         <div className="hint-text">
           <MousePointerClick size={15} />
-          <span>Click any tile to rotate / place an arrow</span>
+          <span>Click any tile to rotate clockwise (↑ → ↓ ←)</span>
         </div>
       </div>
     </div>
