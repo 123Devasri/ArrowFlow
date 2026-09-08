@@ -3,11 +3,11 @@ import Tile from './Tile';
 import { GRID_ROWS, GRID_COLS } from '../utils/constants';
 import { createEmptyGrid, getNextClockwiseDirection } from '../utils/helpers';
 import { calculateFlowPath } from '../algorithms/pathfinding';
-import { MousePointerClick, RotateCcw, Sparkles, AlertCircle } from 'lucide-react';
+import { MousePointerClick, RotateCcw, Sparkles, AlertCircle, Trophy, RefreshCw } from 'lucide-react';
 import '../css/GameBoard.css';
 
 /**
- * Reusable GameBoard component managing 5x5 matrix state and path traversal execution.
+ * Reusable GameBoard component managing matrix state, path traversal, and win detection.
  */
 export default function GameBoard() {
   // Store board tiles in React state
@@ -15,17 +15,22 @@ export default function GameBoard() {
 
   /**
    * Recalculate path traversal whenever grid state changes.
-   * Path calculation is kept completely separate in pathfinding.js utility.
+   * Win detection occurs when flowResult.reachedTarget is true.
    */
   const flowResult = useMemo(() => {
     return calculateFlowPath(grid);
   }, [grid]);
 
+  const isWon = flowResult.reachedTarget;
+
   /**
    * Click handler to rotate arrow clockwise (+90°) on regular tiles.
-   * Start and Target tiles remain fixed anchor points.
+   * Pauses board tile interaction when the puzzle is solved.
    */
   const handleTileClick = (row, col) => {
+    // Pause board tile interaction once the goal is reached
+    if (isWon) return;
+
     setGrid((prevGrid) =>
       prevGrid.map((r, rIdx) =>
         r.map((tile, cIdx) => {
@@ -52,7 +57,7 @@ export default function GameBoard() {
   };
 
   /**
-   * Resets all placed arrows back to initial empty grid.
+   * Resets all placed arrows back to initial empty grid and resumes gameplay.
    */
   const handleReset = () => {
     setGrid(createEmptyGrid(GRID_ROWS, GRID_COLS));
@@ -72,28 +77,43 @@ export default function GameBoard() {
         </button>
       </div>
 
-      {/* Status Bar showing live path calculation metrics */}
-      <div className="flow-status-bar">
-        {flowResult.reachedTarget ? (
-          <div className="status-pill status-success">
-            <Sparkles size={15} />
-            <span>Target Reached! ({flowResult.path.length} Tiles)</span>
+      {/* Completion Banner (Win State) */}
+      {isWon ? (
+        <div className="completion-card">
+          <div className="completion-info">
+            <div className="completion-icon">
+              <Trophy size={20} />
+            </div>
+            <div>
+              <h3 className="completion-title">Flow Complete!</h3>
+              <p className="completion-sub">Path connected in {flowResult.path.length} steps</p>
+            </div>
           </div>
-        ) : flowResult.stopReason === 'LOOP' ? (
-          <div className="status-pill status-warning">
-            <AlertCircle size={15} />
-            <span>Loop Detected</span>
-          </div>
-        ) : flowResult.stopReason === 'OUT_OF_BOUNDS' ? (
-          <div className="status-pill status-muted">
-            <span>Path Left Board ({flowResult.path.length} Tiles)</span>
-          </div>
-        ) : (
-          <div className="status-pill status-info">
-            <span>Path Length: {flowResult.path.length} Tiles</span>
-          </div>
-        )}
-      </div>
+
+          <button className="btn-play-again" onClick={handleReset}>
+            <RefreshCw size={15} />
+            <span>Play Again</span>
+          </button>
+        </div>
+      ) : (
+        /* Status Bar showing live path calculation metrics */
+        <div className="flow-status-bar">
+          {flowResult.stopReason === 'LOOP' ? (
+            <div className="status-pill status-warning">
+              <AlertCircle size={15} />
+              <span>Loop Detected</span>
+            </div>
+          ) : flowResult.stopReason === 'OUT_OF_BOUNDS' ? (
+            <div className="status-pill status-muted">
+              <span>Path Left Board ({flowResult.path.length} Tiles)</span>
+            </div>
+          ) : (
+            <div className="status-pill status-info">
+              <span>Path Length: {flowResult.path.length} Tiles</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 5x5 Responsive Grid Canvas */}
       <div className="grid-5x5-canvas">
@@ -117,7 +137,11 @@ export default function GameBoard() {
       <div className="board-hint-bar">
         <div className="hint-text">
           <MousePointerClick size={15} />
-          <span>Click any tile to rotate arrow and extend the flow path</span>
+          <span>
+            {isWon
+              ? 'Puzzle solved! Click "Play Again" to restart'
+              : 'Click any tile to rotate arrow and extend the flow path'}
+          </span>
         </div>
       </div>
     </div>
