@@ -2,10 +2,10 @@
  * Arrow Flow Puzzle Generator
  * 
  * Generates guaranteed solvable puzzle boards across Easy (4x4), Medium (5x5),
- * and Hard (6x6) difficulties with tuned path complexities.
+ * and Hard (6x6) difficulties with weighted tile movement costs (1, 2, 3).
  */
 
-import { GRID_ROWS, GRID_COLS, DIRECTIONS, DIRECTION_ROTATION, DIFFICULTY_LEVELS } from './constants';
+import { GRID_ROWS, GRID_COLS, DIRECTIONS, DIRECTION_ROTATION } from './constants';
 import { isValidCoordinate } from './helpers';
 
 const DIRECTION_KEYS = [DIRECTIONS.UP, DIRECTIONS.RIGHT, DIRECTIONS.DOWN, DIRECTIONS.LEFT];
@@ -35,7 +35,6 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
   const maxSteps = rows * cols * 2;
   let steps = 0;
 
-  // Set bias factor based on difficulty (higher = more direct, lower = more winding)
   const isEasy = difficultyKey === 'EASY';
   const isHard = difficultyKey === 'HARD';
 
@@ -59,7 +58,6 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
     }
 
     if (neighbors.length === 0) {
-      // Force step towards target ignoring visited
       const dr = Math.sign(targetPos.row - current.row);
       const dc = Math.sign(targetPos.col - current.col);
 
@@ -83,19 +81,15 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
       continue;
     }
 
-    // Sort neighbors based on difficulty
     if (isEasy) {
-      // Easy: Always prefer neighbor closest to target (direct simple paths)
       neighbors.sort((a, b) => a.dist - b.dist);
     } else if (isHard) {
-      // Hard: Allow winding detours with 50% probability
       if (Math.random() < 0.5 && neighbors.length > 1) {
         neighbors.sort((a, b) => b.dist - a.dist);
       } else {
         neighbors.sort((a, b) => a.dist - b.dist + (Math.random() - 0.5));
       }
     } else {
-      // Medium: Balanced path sorting
       neighbors.sort((a, b) => a.dist - b.dist + (Math.random() - 0.5));
     }
 
@@ -109,7 +103,7 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
 }
 
 /**
- * Generates a complete solvable grid matrix based on difficulty setting.
+ * Generates a complete solvable grid matrix with weighted tile movement costs (1, 2, 3).
  * 
  * @param {number} rows Number of grid rows
  * @param {number} cols Number of grid columns
@@ -142,7 +136,7 @@ export function generateSolvableGrid(
     solutionDirections.set(`${curr.row}-${curr.col}`, dir);
   }
 
-  // 2. Build grid matrix
+  // 2. Build grid matrix with weighted movement costs
   const grid = [];
   for (let r = 0; r < rows; r++) {
     const row = [];
@@ -153,6 +147,11 @@ export function generateSolvableGrid(
 
       let initialArrow = null;
       let rotationDegrees = 0;
+
+      // Assign movement cost (1, 2, or 3)
+      // Weighted distribution: 50% cost 1, 30% cost 2, 20% cost 3
+      const randCost = Math.random();
+      const tileCost = isStart || isTarget ? 1 : randCost < 0.5 ? 1 : randCost < 0.8 ? 2 : 3;
 
       if (isStart) {
         initialArrow = solutionDirections.get(key) || DIRECTIONS.RIGHT;
@@ -173,6 +172,7 @@ export function generateSolvableGrid(
         col: c,
         arrow: initialArrow,
         rotationDegrees,
+        cost: tileCost,
         isStart,
         isTarget,
         visited: false,

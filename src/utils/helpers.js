@@ -1,6 +1,6 @@
 /**
  * Arrow Flow Helper Utilities
- * Helper functions for grid generation, coordinate validation, and time formatting.
+ * Helper functions for grid generation, coordinate validation, path cost calculations, and time formatting.
  */
 import { GRID_ROWS, GRID_COLS, DIRECTIONS, DIRECTION_CYCLE } from './constants';
 
@@ -22,6 +22,7 @@ export function createEmptyGrid(rows = GRID_ROWS, cols = GRID_COLS) {
         col: c,
         arrow: isStart ? DIRECTIONS.RIGHT : null,
         rotationDegrees: 0,
+        cost: 1, // Default movement cost
         isStart,
         isTarget,
         visited: false,
@@ -30,6 +31,28 @@ export function createEmptyGrid(rows = GRID_ROWS, cols = GRID_COLS) {
     grid.push(row);
   }
   return grid;
+}
+
+/**
+ * Calculates total movement cost along a path sequence.
+ * @param {Array<Array<Object>>} grid 2D matrix of tile objects
+ * @param {Array<{row, col}>} path Path coordinate sequence
+ * @returns {number} Sum of movement costs along the path
+ */
+export function calculatePathCost(grid, path) {
+  if (!grid || !path || path.length <= 1) return 0;
+  let totalCost = 0;
+
+  // Sum cost for every tile after start in the path
+  for (let i = 1; i < path.length; i++) {
+    const tilePos = path[i];
+    const tile = grid[tilePos.row]?.[tilePos.col];
+    if (tile) {
+      totalCost += tile.cost || 1;
+    }
+  }
+
+  return totalCost;
 }
 
 /**

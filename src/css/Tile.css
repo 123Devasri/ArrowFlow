@@ -20,6 +20,39 @@
   padding: 0;
 }
 
+/* Tile Movement Cost Badge (Top-Right Corner) */
+.tile-cost-badge {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 6px;
+  line-height: 1.1;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tile-cost-badge.cost-1 {
+  background-color: rgba(56, 189, 248, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.tile-cost-badge.cost-2 {
+  background-color: rgba(250, 204, 21, 0.15);
+  color: #facc15; /* Yellow 400 */
+  border: 1px solid rgba(250, 204, 21, 0.35);
+}
+
+.tile-cost-badge.cost-3 {
+  background-color: rgba(244, 63, 94, 0.15);
+  color: var(--accent-rose);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+}
+
 /* Hover & Active States */
 .tile-button:hover:not(.is-special) {
   background-color: #334155;

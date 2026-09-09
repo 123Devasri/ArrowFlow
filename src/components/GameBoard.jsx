@@ -2,16 +2,17 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Tile from './Tile';
 import AlgorithmInfo from './AlgorithmInfo';
 import { DIFFICULTY_LEVELS } from '../utils/constants';
-import { getNextClockwiseDirection, formatTime } from '../utils/helpers';
+import { getNextClockwiseDirection, formatTime, calculatePathCost } from '../utils/helpers';
 import { generateSolvableGrid } from '../utils/boardGenerator';
 import { calculateFlowPath } from '../algorithms/pathfinding';
 import { solveBFS } from '../algorithms/bfs';
 import { solveDFS } from '../algorithms/dfs';
-import { MousePointerClick, RotateCcw, AlertCircle, Trophy, RefreshCw, Footprints, Timer, Dices } from 'lucide-react';
+import { solveDijkstra } from '../algorithms/dijkstra';
+import { MousePointerClick, RotateCcw, AlertCircle, Trophy, RefreshCw, Footprints, Timer, Dices, Award } from 'lucide-react';
 import '../css/GameBoard.css';
 
 /**
- * Reusable GameBoard component managing matrix state, path algorithms (BFS & DFS), win detection, move counting, timer, and difficulty options.
+ * Reusable GameBoard component managing matrix state, path algorithms (BFS, DFS, Dijkstra), weighted costs, win detection, and difficulty options.
  */
 export default function GameBoard({
   isTimerEnabled = true,
@@ -22,7 +23,7 @@ export default function GameBoard({
 }) {
   // Selected difficulty key state (EASY, MEDIUM, HARD)
   const [difficultyKey, setDifficultyKey] = useState('MEDIUM');
-  // Selected active graph algorithm ('BFS' or 'DFS')
+  // Selected active graph algorithm ('BFS', 'DFS', or 'DIJKSTRA')
   const [activeAlgorithm, setActiveAlgorithm] = useState('BFS');
 
   // Active difficulty configuration
@@ -60,10 +61,27 @@ export default function GameBoard({
     return solveDFS(grid, { row: 0, col: 0 }, { row: diffConfig.rows - 1, col: diffConfig.cols - 1 });
   }, [grid, diffConfig]);
 
+  /**
+   * Execute Dijkstra's Shortest Path algorithm for weighted movement costs.
+   */
+  const dijkstraResult = useMemo(() => {
+    return solveDijkstra(grid, { row: 0, col: 0 }, { row: diffConfig.rows - 1, col: diffConfig.cols - 1 });
+  }, [grid, diffConfig]);
+
   // Active algorithm result depending on user selection
-  const algoResult = activeAlgorithm === 'BFS' ? bfsResult : dfsResult;
+  const algoResult =
+    activeAlgorithm === 'BFS'
+      ? bfsResult
+      : activeAlgorithm === 'DFS'
+      ? dfsResult
+      : dijkstraResult;
 
   const isWon = flowResult.reachedTarget;
+
+  // Calculate player's actual path cost
+  const playerPathCost = useMemo(() => {
+    return calculatePathCost(grid, flowResult.path);
+  }, [grid, flowResult.path]);
 
   // Zero-dependency Timer Effect: Ticks every second while timer is enabled and puzzle is active
   useEffect(() => {
@@ -213,13 +231,14 @@ export default function GameBoard({
         <div className="completion-card">
           <div className="completion-info">
             <div className="completion-icon">
-              <Trophy size={20} />
+              {playerPathCost === dijkstraResult.optimalCost ? <Award size={22} /> : <Trophy size={20} />}
             </div>
             <div>
-              <h3 className="completion-title">Flow Complete!</h3>
+              <h3 className="completion-title">
+                Flow Complete! {playerPathCost === dijkstraResult.optimalCost ? '⭐ Perfect Cost!' : ''}
+              </h3>
               <p className="completion-sub">
-                [{diffConfig.label}] Solved in {moveCount} {moveCount === 1 ? 'move' : 'moves'}
-                {isTimerEnabled ? ` (${formatTime(elapsedSeconds)})` : ''}
+                Your Path Cost: <strong>{playerPathCost}</strong> | Optimal Dijkstra Cost: <strong>{dijkstraResult.optimalCost}</strong>
               </p>
             </div>
           </div>
@@ -231,7 +250,7 @@ export default function GameBoard({
           </button>
         </div>
       ) : (
-        /* Status Bar showing live path calculation metrics */
+        /* Status Bar showing live path calculation & cost metrics */
         <div className="flow-status-bar">
           {flowResult.stopReason === 'LOOP' ? (
             <div className="status-pill status-warning">
@@ -244,7 +263,7 @@ export default function GameBoard({
             </div>
           ) : (
             <div className="status-pill status-info">
-              <span>Path Length: {flowResult.path.length} Tiles</span>
+              <span>Path Length: {flowResult.path.length} Tiles (Cost: {playerPathCost})</span>
             </div>
           )}
         </div>
@@ -280,13 +299,13 @@ export default function GameBoard({
           <MousePointerClick size={15} />
           <span>
             {isWon
-              ? `Puzzle solved! Click "Play Again" for another ${diffConfig.label} puzzle`
-              : `${diffConfig.label} Mode: Click tiles to rotate arrows and connect Start to Goal`}
+              ? `Puzzle solved! Path Cost: ${playerPathCost} (Optimal: ${dijkstraResult.optimalCost}). Click "Play Again" to restart`
+              : `${diffConfig.label} Mode: Rotate tiles to connect Start to Goal with minimum movement cost`}
           </span>
         </div>
       </div>
 
-      {/* Developer-Friendly Algorithm Information Section (BFS vs DFS) */}
+      {/* Developer-Friendly Algorithm Information Section (BFS vs DFS vs Dijkstra) */}
       <AlgorithmInfo
         algoResult={algoResult}
         activeAlgorithm={activeAlgorithm}

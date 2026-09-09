@@ -6,12 +6,12 @@ import '../css/Tile.css';
  * Reusable Tile component for individual grid cells on the Arrow Flow board.
  * 
  * @param {Object} props
- * @param {Object} props.tile Tile state object ({ row, col, arrow, rotationDegrees, isStart, isTarget })
+ * @param {Object} props.tile Tile state object ({ row, col, arrow, rotationDegrees, cost, isStart, isTarget })
  * @param {boolean} props.isReachable Whether this tile is in the active flow path
  * @param {Function} props.onTileClick Callback when tile is clicked
  */
 export default function Tile({ tile, isReachable, onTileClick }) {
-  const { row, col, arrow, rotationDegrees, isStart, isTarget } = tile;
+  const { row, col, arrow, rotationDegrees, cost = 1, isStart, isTarget } = tile;
 
   // Determine CSS classes for special styling
   let classNames = 'tile-button';
@@ -26,6 +26,13 @@ export default function Tile({ tile, isReachable, onTileClick }) {
       onClick={() => onTileClick(row, col)}
       aria-label={`Tile (${row}, ${col})`}
     >
+      {/* Tile Movement Cost Badge (top-right corner) */}
+      {!isStart && !isTarget && (
+        <span className={`tile-cost-badge cost-${cost}`} title={`Movement Cost: ${cost}`}>
+          {cost}
+        </span>
+      )}
+
       {isStart ? (
         <>
           <Play className="tile-icon" size={22} fill="currentColor" />
