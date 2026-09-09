@@ -18,6 +18,8 @@
   border-bottom: 1px dashed var(--border-color);
   padding-bottom: 0.75rem;
   margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .algo-title-group {
@@ -32,14 +34,38 @@
   color: var(--accent-cyan);
 }
 
-.algo-tag {
-  font-size: 0.7rem;
-  font-weight: 600;
-  background-color: rgba(99, 102, 241, 0.15);
-  color: var(--accent-indigo);
-  padding: 0.2rem 0.5rem;
+/* Algorithm Selector Tabs (BFS vs DFS) */
+.algo-selector-tabs {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-dark);
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  gap: 2px;
+}
+
+.btn-algo-tab {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
   border-radius: 6px;
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-mono);
+}
+
+.btn-algo-tab:hover {
+  color: var(--text-primary);
+}
+
+.btn-algo-tab.active {
+  background-color: var(--accent-indigo);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
 }
 
 .algo-grid-stats {

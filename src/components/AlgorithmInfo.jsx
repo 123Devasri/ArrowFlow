@@ -1,13 +1,17 @@
 import React from 'react';
-import { Cpu, Network, CheckCircle2, XCircle } from 'lucide-react';
+import { Cpu, CheckCircle2, XCircle } from 'lucide-react';
 import '../css/AlgorithmInfo.css';
 
 /**
  * Developer-Friendly Algorithm Information Component.
- * Displays live BFS graph representation details and traversal metrics.
+ * Displays live BFS vs DFS graph representation details and traversal metrics.
  */
-export default function AlgorithmInfo({ bfsResult }) {
-  if (!bfsResult) return null;
+export default function AlgorithmInfo({
+  algoResult,
+  activeAlgorithm = 'BFS',
+  onSelectAlgorithm,
+}) {
+  if (!algoResult) return null;
 
   const {
     isReachable,
@@ -15,17 +19,35 @@ export default function AlgorithmInfo({ bfsResult }) {
     visitedCount,
     totalVertices,
     nodesExplored,
-  } = bfsResult;
+  } = algoResult;
+
+  const isBFS = activeAlgorithm === 'BFS';
 
   return (
     <div className="algo-info-container">
       <div className="algo-header">
         <div className="algo-title-group">
           <Cpu size={16} style={{ color: 'var(--accent-cyan)' }} />
-          <span className="algo-title">Algorithm: Breadth-First Search (BFS)</span>
+          <span className="algo-title">
+            Algorithm: {isBFS ? 'Breadth-First Search (BFS)' : 'Depth-First Search (DFS)'}
+          </span>
         </div>
 
-        <span className="algo-tag">Graph G = (V, E)</span>
+        {/* Algorithm Selector Pills (BFS vs DFS) */}
+        <div className="algo-selector-tabs" title="Switch Graph Algorithm">
+          <button
+            className={`btn-algo-tab ${isBFS ? 'active' : ''}`}
+            onClick={() => onSelectAlgorithm && onSelectAlgorithm('BFS')}
+          >
+            BFS
+          </button>
+          <button
+            className={`btn-algo-tab ${!isBFS ? 'active' : ''}`}
+            onClick={() => onSelectAlgorithm && onSelectAlgorithm('DFS')}
+          >
+            DFS
+          </button>
+        </div>
       </div>
 
       <div className="algo-grid-stats">
@@ -35,7 +57,7 @@ export default function AlgorithmInfo({ bfsResult }) {
         </div>
 
         <div className="algo-stat-box">
-          <span className="algo-stat-label">BFS Explored</span>
+          <span className="algo-stat-label">{isBFS ? 'BFS Explored' : 'DFS Explored'}</span>
           <span className="algo-stat-val" style={{ color: 'var(--accent-indigo)' }}>
             {visitedCount} / {totalVertices}
           </span>
@@ -67,8 +89,8 @@ export default function AlgorithmInfo({ bfsResult }) {
 
       <div className="algo-code-snippet">
         <code>
-          // Graph Model: Adjacency List (Directed)<br />
-          BFS Queue Status: <span className="accent">{nodesExplored.length} FIFO pops</span> | Shortest Path: <span className="highlight">{isReachable ? `${path.length} steps` : 'Unreachable'}</span>
+          // Graph Model: Directed Adjacency List Map<br />
+          {isBFS ? 'BFS FIFO Queue' : 'DFS LIFO Stack'} Operations: <span className="accent">{nodesExplored.length} steps</span> | Path: <span className="highlight">{isReachable ? `${path.length} tiles` : 'Unreachable'}</span>
         </code>
       </div>
     </div>

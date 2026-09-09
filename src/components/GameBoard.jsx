@@ -6,11 +6,12 @@ import { getNextClockwiseDirection, formatTime } from '../utils/helpers';
 import { generateSolvableGrid } from '../utils/boardGenerator';
 import { calculateFlowPath } from '../algorithms/pathfinding';
 import { solveBFS } from '../algorithms/bfs';
+import { solveDFS } from '../algorithms/dfs';
 import { MousePointerClick, RotateCcw, AlertCircle, Trophy, RefreshCw, Footprints, Timer, Dices } from 'lucide-react';
 import '../css/GameBoard.css';
 
 /**
- * Reusable GameBoard component managing matrix state, BFS graph traversal, win detection, move counting, timer, and difficulty options.
+ * Reusable GameBoard component managing matrix state, path algorithms (BFS & DFS), win detection, move counting, timer, and difficulty options.
  */
 export default function GameBoard({
   isTimerEnabled = true,
@@ -21,6 +22,8 @@ export default function GameBoard({
 }) {
   // Selected difficulty key state (EASY, MEDIUM, HARD)
   const [difficultyKey, setDifficultyKey] = useState('MEDIUM');
+  // Selected active graph algorithm ('BFS' or 'DFS')
+  const [activeAlgorithm, setActiveAlgorithm] = useState('BFS');
 
   // Active difficulty configuration
   const diffConfig = DIFFICULTY_LEVELS[difficultyKey] || DIFFICULTY_LEVELS.MEDIUM;
@@ -37,18 +40,28 @@ export default function GameBoard({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   /**
-   * Recalculate path traversal whenever grid state changes.
+   * Recalculate basic flow path traversal whenever grid state changes.
    */
   const flowResult = useMemo(() => {
     return calculateFlowPath(grid, { row: 0, col: 0 }, { row: diffConfig.rows - 1, col: diffConfig.cols - 1 });
   }, [grid, diffConfig]);
 
   /**
-   * Execute Breadth-First Search (BFS) algorithm to analyze target reachability & graph structure.
+   * Execute Breadth-First Search (BFS) algorithm.
    */
   const bfsResult = useMemo(() => {
     return solveBFS(grid, { row: 0, col: 0 }, { row: diffConfig.rows - 1, col: diffConfig.cols - 1 });
   }, [grid, diffConfig]);
+
+  /**
+   * Execute Depth-First Search (DFS) algorithm.
+   */
+  const dfsResult = useMemo(() => {
+    return solveDFS(grid, { row: 0, col: 0 }, { row: diffConfig.rows - 1, col: diffConfig.cols - 1 });
+  }, [grid, diffConfig]);
+
+  // Active algorithm result depending on user selection
+  const algoResult = activeAlgorithm === 'BFS' ? bfsResult : dfsResult;
 
   const isWon = flowResult.reachedTarget;
 
@@ -273,8 +286,12 @@ export default function GameBoard({
         </div>
       </div>
 
-      {/* Developer-Friendly Algorithm Information Section */}
-      <AlgorithmInfo bfsResult={bfsResult} />
+      {/* Developer-Friendly Algorithm Information Section (BFS vs DFS) */}
+      <AlgorithmInfo
+        algoResult={algoResult}
+        activeAlgorithm={activeAlgorithm}
+        onSelectAlgorithm={setActiveAlgorithm}
+      />
     </div>
   );
 }
