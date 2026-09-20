@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Tile from './Tile';
-import AlgorithmInfo from './AlgorithmInfo';
 import { DIFFICULTY_LEVELS } from '../utils/constants';
 import { getNextClockwiseDirection, formatTime, calculatePathCost } from '../utils/helpers';
 import { generateSolvableGrid } from '../utils/boardGenerator';
@@ -8,14 +7,14 @@ import { calculateFlowPath } from '../algorithms/pathfinding';
 import { solveBFS } from '../algorithms/bfs';
 import { solveDFS } from '../algorithms/dfs';
 import { solveDijkstra } from '../algorithms/dijkstra';
-import { MousePointerClick, RotateCcw, AlertCircle, Trophy, RefreshCw, Footprints, Timer, Dices, Award } from 'lucide-react';
+import { MousePointerClick, RotateCcw, AlertCircle, Trophy, RefreshCw, Footprints, Timer, Dices, Award, Zap, GitBranch } from 'lucide-react';
 import '../css/GameBoard.css';
 
 /**
  * Reusable GameBoard component managing matrix state, path algorithms (BFS, DFS, Dijkstra), weighted costs, win detection, and difficulty options.
  */
 export default function GameBoard({
-  showAlgorithmInfo = false,
+  selectedAlgoMode = 'BFS',
   isTimerEnabled = true,
   onMoveCountChange,
   onGameStatusChange,
@@ -25,7 +24,14 @@ export default function GameBoard({
   // Selected difficulty key state (EASY, MEDIUM, HARD)
   const [difficultyKey, setDifficultyKey] = useState('MEDIUM');
   // Selected active graph algorithm ('BFS', 'DFS', or 'DIJKSTRA')
-  const [activeAlgorithm, setActiveAlgorithm] = useState('BFS');
+  const [activeAlgorithm, setActiveAlgorithm] = useState(selectedAlgoMode);
+
+  // Sync activeAlgorithm when selectedAlgoMode prop changes
+  useEffect(() => {
+    if (selectedAlgoMode) {
+      setActiveAlgorithm(selectedAlgoMode);
+    }
+  }, [selectedAlgoMode]);
 
   // Active difficulty configuration
   const diffConfig = DIFFICULTY_LEVELS[difficultyKey] || DIFFICULTY_LEVELS.MEDIUM;
@@ -185,6 +191,39 @@ export default function GameBoard({
         <div className="board-title-group">
           <h2 className="board-title">Game Grid</h2>
           <span className="board-badge">{diffConfig.rows} × {diffConfig.cols}</span>
+
+          {/* Active Mode Badge Indicator */}
+          <span
+            className="board-badge"
+            style={{
+              backgroundColor:
+                activeAlgorithm === 'DIJKSTRA'
+                  ? 'rgba(168, 85, 247, 0.15)'
+                  : activeAlgorithm === 'DFS'
+                  ? 'rgba(99, 102, 241, 0.15)'
+                  : 'rgba(56, 189, 248, 0.15)',
+              color:
+                activeAlgorithm === 'DIJKSTRA'
+                  ? '#c084fc'
+                  : activeAlgorithm === 'DFS'
+                  ? 'var(--accent-indigo)'
+                  : 'var(--accent-cyan)',
+              borderColor:
+                activeAlgorithm === 'DIJKSTRA'
+                  ? 'rgba(168, 85, 247, 0.3)'
+                  : activeAlgorithm === 'DFS'
+                  ? 'rgba(99, 102, 241, 0.3)'
+                  : 'rgba(56, 189, 248, 0.3)',
+            }}
+          >
+            {activeAlgorithm === 'DIJKSTRA' ? (
+              <><Award size={13} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />Dijkstra</>
+            ) : activeAlgorithm === 'DFS' ? (
+              <><GitBranch size={13} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />DFS</>
+            ) : (
+              <><Zap size={13} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />BFS</>
+            )}
+          </span>
         </div>
 
         {/* Minimal Difficulty Level Selector Tabs */}
@@ -239,7 +278,7 @@ export default function GameBoard({
                 Flow Complete! {playerPathCost === dijkstraResult.optimalCost ? '⭐ Perfect Cost!' : ''}
               </h3>
               <p className="completion-sub">
-                Your Path Cost: <strong>{playerPathCost}</strong> | Optimal Dijkstra Cost: <strong>{dijkstraResult.optimalCost}</strong>
+                [{activeAlgorithm} Mode] Cost: <strong>{playerPathCost}</strong> | Optimal: <strong>{dijkstraResult.optimalCost}</strong>
               </p>
             </div>
           </div>
@@ -300,20 +339,11 @@ export default function GameBoard({
           <MousePointerClick size={15} />
           <span>
             {isWon
-              ? `Puzzle solved! Path Cost: ${playerPathCost} (Optimal: ${dijkstraResult.optimalCost}). Click "Play Again" to restart`
-              : `${diffConfig.label} Mode: Rotate tiles to connect Start to Goal with minimum movement cost`}
+              ? `Puzzle solved! Cost: ${playerPathCost} (Optimal: ${dijkstraResult.optimalCost}). Click "Play Again" to restart`
+              : `${diffConfig.label} [${activeAlgorithm} Mode]: Rotate tiles to connect Start to Goal with minimum cost`}
           </span>
         </div>
       </div>
-
-      {/* Render Developer Algorithm Information Section when on Algorithms tab */}
-      {showAlgorithmInfo && (
-        <AlgorithmInfo
-          algoResult={algoResult}
-          activeAlgorithm={activeAlgorithm}
-          onSelectAlgorithm={setActiveAlgorithm}
-        />
-      )}
     </div>
   );
 }

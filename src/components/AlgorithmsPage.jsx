@@ -1,79 +1,81 @@
 import React from 'react';
-import GameBoard from './GameBoard';
-import { Cpu } from 'lucide-react';
+import { Zap, GitBranch, Award, Play } from 'lucide-react';
+import '../css/AlgorithmCards.css';
 
 /**
  * Dedicated Algorithms View Component for Arrow Flow.
- * Features an interactive graph playground and detailed side-by-side comparison of BFS, DFS, and Dijkstra.
+ * Displays three clean selectable algorithm cards for BFS, DFS, and Dijkstra.
  */
-export default function AlgorithmsPage({ isTimerEnabled }) {
-  return (
-    <div className="algorithms-page-view" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-      <div
-        className="algo-header-card"
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          backgroundColor: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '1.25rem 1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.75rem',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div
-            style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--accent-indigo), var(--accent-purple))',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: 'var(--glow-indigo)',
-            }}
-          >
-            <Cpu size={22} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              Graph Traversal Algorithms
-            </h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Interactive Graph Theory Playground & Solver Analysis
-            </p>
-          </div>
-        </div>
+export default function AlgorithmsPage({ onSelectAlgoMode }) {
+  const cards = [
+    {
+      id: 'BFS',
+      name: 'Breadth-First Search (BFS)',
+      badge: 'Fewest Moves',
+      badgeClass: 'badge-bfs',
+      iconClass: 'card-icon-bfs',
+      btnClass: 'btn-play-bfs',
+      icon: <Zap size={22} />,
+      purpose: 'Find a path connecting Start to Target using the fewest tile moves.',
+    },
+    {
+      id: 'DFS',
+      name: 'Depth-First Search (DFS)',
+      badge: 'Reachable Paths',
+      badgeClass: 'badge-dfs',
+      iconClass: 'card-icon-dfs',
+      btnClass: 'btn-play-dfs',
+      icon: <GitBranch size={22} />,
+      purpose: 'Explore all reachable paths and deep branch connections across the grid.',
+    },
+    {
+      id: 'DIJKSTRA',
+      name: "Dijkstra's Algorithm",
+      badge: 'Minimum Cost',
+      badgeClass: 'badge-dijkstra',
+      iconClass: 'card-icon-dijkstra',
+      btnClass: 'btn-play-dijkstra',
+      icon: <Award size={22} />,
+      purpose: 'Find the optimal minimum-cost route considering weighted tile movement (1, 2, 3).',
+    },
+  ];
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '0.65rem',
-            marginTop: '0.25rem',
-          }}
-        >
-          <div style={{ backgroundColor: 'var(--bg-dark)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--accent-cyan)', fontWeight: 700, display: 'block' }}>BFS (Queue)</span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>Shortest Unweighted Path</span>
-          </div>
-          <div style={{ backgroundColor: 'var(--bg-dark)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--accent-indigo)', fontWeight: 700, display: 'block' }}>DFS (Stack)</span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>Deep Branch Exploration</span>
-          </div>
-          <div style={{ backgroundColor: 'var(--bg-dark)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--accent-purple)', fontWeight: 700, display: 'block' }}>Dijkstra</span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>Weighted Min-Cost Path</span>
-          </div>
-        </div>
+  return (
+    <div className="algo-cards-container">
+      <div className="algo-section-header">
+        <h2 className="algo-section-title">Select Algorithm Mode</h2>
+        <p className="algo-section-desc">
+          Choose a solver algorithm below to launch and play Arrow Flow in that game mode.
+        </p>
       </div>
 
-      {/* Main Game Board canvas with active algorithm statistics */}
-      <GameBoard showAlgorithmInfo={true} isTimerEnabled={isTimerEnabled} />
+      <div className="algo-cards-grid">
+        {cards.map((card) => (
+          <div key={card.id} className="algo-card">
+            <div className="algo-card-top">
+              <div className="algo-card-header">
+                <div className={`algo-card-icon ${card.iconClass}`}>
+                  {card.icon}
+                </div>
+                <span className={`algo-mode-badge ${card.badgeClass}`}>
+                  {card.badge}
+                </span>
+              </div>
+
+              <h3 className="algo-card-name">{card.name}</h3>
+              <p className="algo-card-purpose">{card.purpose}</p>
+            </div>
+
+            <button
+              className={`btn-card-play ${card.btnClass}`}
+              onClick={() => onSelectAlgoMode && onSelectAlgoMode(card.id)}
+            >
+              <Play size={16} fill="currentColor" />
+              <span>Play {card.id} Mode</span>
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

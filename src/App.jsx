@@ -13,10 +13,21 @@ import './css/App.css';
 export default function App() {
   // Navigation tab state ('play' | 'daily' | 'algorithms')
   const [activeTab, setActiveTab] = useState('play');
+  // Selected algorithm mode ('BFS' | 'DFS' | 'DIJKSTRA')
+  const [selectedAlgoMode, setSelectedAlgoMode] = useState('BFS');
   // Settings modal visibility state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   // Timer toggle setting
   const [isTimerEnabled, setIsTimerEnabled] = useState(true);
+
+  /**
+   * Handles selecting an algorithm card from the Algorithms section:
+   * Sets the active algorithm solver and switches tab immediately to Play mode.
+   */
+  const handleSelectAlgoMode = (mode) => {
+    setSelectedAlgoMode(mode);
+    setActiveTab('play');
+  };
 
   return (
     <div className="app-container">
@@ -28,7 +39,10 @@ export default function App() {
 
       <main className="main-content">
         {activeTab === 'play' && (
-          <GameBoard isTimerEnabled={isTimerEnabled} />
+          <GameBoard
+            selectedAlgoMode={selectedAlgoMode}
+            isTimerEnabled={isTimerEnabled}
+          />
         )}
 
         {activeTab === 'daily' && (
@@ -36,7 +50,9 @@ export default function App() {
         )}
 
         {activeTab === 'algorithms' && (
-          <AlgorithmsPage isTimerEnabled={isTimerEnabled} />
+          <AlgorithmsPage
+            onSelectAlgoMode={handleSelectAlgoMode}
+          />
         )}
       </main>
 
