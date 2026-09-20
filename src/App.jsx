@@ -1,49 +1,56 @@
 import React, { useState } from 'react';
 import Header from './components/Header';
 import GameBoard from './components/GameBoard';
-import ControlPanel from './components/ControlPanel';
+import DailyPuzzle from './components/DailyPuzzle';
+import AlgorithmsPage from './components/AlgorithmsPage';
+import SettingsModal from './components/SettingsModal';
 import './css/App.css';
 
 /**
  * Main Arrow Flow Application Component.
- * Integrates Header, GameBoard (Easy, Medium, Hard), and ControlPanel.
+ * Integrates top header navigation, tab views (Play, Daily Puzzle, Algorithms), and Settings modal.
  */
 export default function App() {
-  const [moveCount, setMoveCount] = useState(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // Navigation tab state ('play' | 'daily' | 'algorithms')
+  const [activeTab, setActiveTab] = useState('play');
+  // Settings modal visibility state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  // Timer toggle setting
   const [isTimerEnabled, setIsTimerEnabled] = useState(true);
-  const [gameStatus, setGameStatus] = useState('IDLE');
-  const [difficultyLabel, setDifficultyLabel] = useState('Medium');
-
-  const handleToggleTimer = () => {
-    setIsTimerEnabled((prev) => !prev);
-  };
 
   return (
     <div className="app-container">
-      <Header />
-      
+      <Header
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+
       <main className="main-content">
-        <GameBoard
-          isTimerEnabled={isTimerEnabled}
-          onMoveCountChange={setMoveCount}
-          onElapsedTimeChange={setElapsedSeconds}
-          onGameStatusChange={setGameStatus}
-          onDifficultyChange={setDifficultyLabel}
-        />
-        <ControlPanel
-          moveCount={moveCount}
-          elapsedSeconds={elapsedSeconds}
-          isTimerEnabled={isTimerEnabled}
-          gameStatus={gameStatus}
-          difficultyLabel={difficultyLabel}
-          onToggleTimer={handleToggleTimer}
-        />
+        {activeTab === 'play' && (
+          <GameBoard isTimerEnabled={isTimerEnabled} />
+        )}
+
+        {activeTab === 'daily' && (
+          <DailyPuzzle isTimerEnabled={isTimerEnabled} />
+        )}
+
+        {activeTab === 'algorithms' && (
+          <AlgorithmsPage isTimerEnabled={isTimerEnabled} />
+        )}
       </main>
 
       <footer className="app-footer">
         <p>Arrow Flow Engine — Built with <span>React</span> + <span>Vite</span></p>
       </footer>
+
+      {/* Settings Modal Dialog */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        isTimerEnabled={isTimerEnabled}
+        onToggleTimer={() => setIsTimerEnabled((prev) => !prev)}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 }

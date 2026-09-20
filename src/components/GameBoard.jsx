@@ -15,6 +15,7 @@ import '../css/GameBoard.css';
  * Reusable GameBoard component managing matrix state, path algorithms (BFS, DFS, Dijkstra), weighted costs, win detection, and difficulty options.
  */
 export default function GameBoard({
+  showAlgorithmInfo = false,
   isTimerEnabled = true,
   onMoveCountChange,
   onGameStatusChange,
@@ -305,12 +306,14 @@ export default function GameBoard({
         </div>
       </div>
 
-      {/* Developer-Friendly Algorithm Information Section (BFS vs DFS vs Dijkstra) */}
-      <AlgorithmInfo
-        algoResult={algoResult}
-        activeAlgorithm={activeAlgorithm}
-        onSelectAlgorithm={setActiveAlgorithm}
-      />
+      {/* Render Developer Algorithm Information Section when on Algorithms tab */}
+      {showAlgorithmInfo && (
+        <AlgorithmInfo
+          algoResult={algoResult}
+          activeAlgorithm={activeAlgorithm}
+          onSelectAlgorithm={setActiveAlgorithm}
+        />
+      )}
     </div>
   );
 }
