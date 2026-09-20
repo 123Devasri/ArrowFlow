@@ -1,11 +1,12 @@
 /**
- * Arrow Flow Puzzle Generator
+ * Arrow Flow Puzzle Generator & Deterministic Daily Generator
  * 
  * Generates guaranteed solvable puzzle boards across Easy (4x4), Medium (5x5),
  * and Hard (6x6) difficulties with weighted tile movement costs (1, 2, 3).
+ * Includes deterministic daily puzzle generator seeded by calendar date.
  */
 
-import { GRID_ROWS, GRID_COLS, DIRECTIONS, DIRECTION_ROTATION } from './constants';
+import { GRID_ROWS, GRID_COLS, DIRECTIONS, DIRECTION_ROTATION, DIFFICULTY_LEVELS } from './constants';
 import { isValidCoordinate } from './helpers';
 
 const DIRECTION_KEYS = [DIRECTIONS.UP, DIRECTIONS.RIGHT, DIRECTIONS.DOWN, DIRECTIONS.LEFT];
@@ -16,18 +17,66 @@ const DIRECTION_OFFSETS = {
   [DIRECTIONS.LEFT]: { r: 0, c: -1 },
 };
 
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+/**
+ * Deterministic PRNG seeded by integer (Mulberry32 algorithm)
+ */
+function createPRNG(seed) {
+  let s = seed >>> 0;
+  return function () {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
-function getRandomElement(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+/**
+ * Converts a date string "YYYY-MM-DD" into an integer seed
+ */
+function hashDateString(dateStr) {
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash) + 1234567;
+}
+
+/**
+ * Returns today's date string formatted as "YYYY-MM-DD"
+ */
+export function getTodayDateStr() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Calculates day number of year for Daily Puzzle numbering
+ */
+export function getDailyPuzzleNumber(dateStr = getTodayDateStr()) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const start = new Date(y, 0, 0);
+  const diff = date - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  return Math.floor(diff / oneDay);
+}
+
+function getRandomInt(min, max, prng = Math.random) {
+  return Math.floor(prng() * (max - min + 1)) + min;
+}
+
+function getRandomElement(arr, prng = Math.random) {
+  return arr[Math.floor(prng() * arr.length)];
 }
 
 /**
  * Generates a random solution path tailored to difficulty complexity.
  */
-function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyKey = 'MEDIUM') {
+function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyKey = 'MEDIUM', prng = Math.random) {
   const path = [startPos];
   const visited = new Set([`${startPos.row}-${startPos.col}`]);
   let current = startPos;
@@ -65,7 +114,7 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
       let nc = current.col;
       let dir = DIRECTIONS.RIGHT;
 
-      if (dr !== 0 && Math.random() < 0.6) {
+      if (dr !== 0 && prng() < 0.6) {
         nr += dr;
         dir = dr > 0 ? DIRECTIONS.DOWN : DIRECTIONS.UP;
       } else if (dc !== 0) {
@@ -84,13 +133,13 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
     if (isEasy) {
       neighbors.sort((a, b) => a.dist - b.dist);
     } else if (isHard) {
-      if (Math.random() < 0.5 && neighbors.length > 1) {
+      if (prng() < 0.5 && neighbors.length > 1) {
         neighbors.sort((a, b) => b.dist - a.dist);
       } else {
-        neighbors.sort((a, b) => a.dist - b.dist + (Math.random() - 0.5));
+        neighbors.sort((a, b) => a.dist - b.dist + (prng() - 0.5));
       }
     } else {
-      neighbors.sort((a, b) => a.dist - b.dist + (Math.random() - 0.5));
+      neighbors.sort((a, b) => a.dist - b.dist + (prng() - 0.5));
     }
 
     const nextStep = neighbors[0];
@@ -103,23 +152,25 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
 }
 
 /**
- * Generates a complete solvable grid matrix with weighted tile movement costs (1, 2, 3).
+ * Generates a complete solvable grid matrix based on difficulty setting.
  * 
  * @param {number} rows Number of grid rows
  * @param {number} cols Number of grid columns
  * @param {string} difficultyKey 'EASY', 'MEDIUM', or 'HARD'
+ * @param {Function} prng Optional custom random function
  * @returns {Array<Array<Object>>} 2D array of initialized tile objects
  */
 export function generateSolvableGrid(
   rows = GRID_ROWS,
   cols = GRID_COLS,
-  difficultyKey = 'MEDIUM'
+  difficultyKey = 'MEDIUM',
+  prng = Math.random
 ) {
   const startPos = { row: 0, col: 0 };
   const targetPos = { row: rows - 1, col: cols - 1 };
 
   // 1. Generate a valid solution path sequence
-  const solutionPath = generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyKey);
+  const solutionPath = generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyKey, prng);
 
   // Map solution path steps to correct solution directions
   const solutionDirections = new Map();
@@ -148,9 +199,7 @@ export function generateSolvableGrid(
       let initialArrow = null;
       let rotationDegrees = 0;
 
-      // Assign movement cost (1, 2, or 3)
-      // Weighted distribution: 50% cost 1, 30% cost 2, 20% cost 3
-      const randCost = Math.random();
+      const randCost = prng();
       const tileCost = isStart || isTarget ? 1 : randCost < 0.5 ? 1 : randCost < 0.8 ? 2 : 3;
 
       if (isStart) {
@@ -160,10 +209,10 @@ export function generateSolvableGrid(
         initialArrow = null;
         rotationDegrees = 0;
       } else {
-        const randomDir = getRandomElement(DIRECTION_KEYS);
+        const randomDir = getRandomElement(DIRECTION_KEYS, prng);
         initialArrow = randomDir;
 
-        const randomRotations = getRandomInt(0, 3);
+        const randomRotations = getRandomInt(0, 3, prng);
         rotationDegrees = (DIRECTION_ROTATION[randomDir] + randomRotations * 90) % 360;
       }
 
@@ -182,4 +231,16 @@ export function generateSolvableGrid(
   }
 
   return grid;
+}
+
+/**
+ * Generates a deterministic daily puzzle board seeded by calendar date.
+ * 
+ * @param {string} dateStr Format "YYYY-MM-DD"
+ * @returns {Array<Array<Object>>} Deterministic solvable 5x5 grid
+ */
+export function generateDailyGrid(dateStr = getTodayDateStr()) {
+  const seed = hashDateString(dateStr);
+  const prng = createPRNG(seed);
+  return generateSolvableGrid(5, 5, 'MEDIUM', prng);
 }

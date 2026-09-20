@@ -46,7 +46,10 @@ export default function App() {
         )}
 
         {activeTab === 'daily' && (
-          <DailyPuzzle isTimerEnabled={isTimerEnabled} />
+          <DailyPuzzle
+            isTimerEnabled={isTimerEnabled}
+            onReturnToPlay={() => setActiveTab('play')}
+          />
         )}
 
         {activeTab === 'algorithms' && (
