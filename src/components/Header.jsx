@@ -1,13 +1,22 @@
 import React from 'react';
-import { Navigation, Gamepad2, Calendar, Cpu, Settings } from 'lucide-react';
+import { Navigation, Dices, RotateCcw, Cpu, ChevronDown, Settings } from 'lucide-react';
 import '../css/Header.css';
 
 /**
- * Top navigation header component for Arrow Flow with destination tabs and Settings button.
+ * Single navigation header component for Arrow Flow.
+ * Combines branding, game controls (New Game, Reset, Algorithm Dropdown), and Settings in one bar.
  */
-export default function Header({ activeTab = 'play', onTabChange, onOpenSettings }) {
+export default function Header({
+  activeAlgorithm = 'BFS',
+  onSelectAlgorithm,
+  onNewGame,
+  onReset,
+  onOpenSettings,
+  isDailyMode = false,
+}) {
   return (
     <header className="header-bar">
+      {/* Brand Section */}
       <div className="brand-section">
         <div className="logo-badge">
           <Navigation size={22} />
@@ -15,43 +24,48 @@ export default function Header({ activeTab = 'play', onTabChange, onOpenSettings
         <h1 className="brand-title">Arrow Flow</h1>
       </div>
 
-      {/* Main Top Navigation Destinations */}
-      <nav className="nav-tabs">
-        <button
-          className={`nav-tab ${activeTab === 'play' ? 'active' : ''}`}
-          onClick={() => onTabChange && onTabChange('play')}
-        >
-          <Gamepad2 size={16} />
-          <span>Play</span>
-        </button>
+      {/* Center Game Controls */}
+      <div className="header-center-controls">
+        {!isDailyMode && onNewGame && (
+          <button className="btn-header-control primary" onClick={onNewGame} title="Generate brand new solvable puzzle">
+            <Dices size={16} />
+            <span>New Game</span>
+          </button>
+        )}
 
-        <button
-          className={`nav-tab ${activeTab === 'daily' ? 'active' : ''}`}
-          onClick={() => onTabChange && onTabChange('daily')}
-        >
-          <Calendar size={16} />
-          <span>Daily Puzzle</span>
-        </button>
+        {onReset && (
+          <button className="btn-header-control" onClick={onReset} title="Reset current board to initial state">
+            <RotateCcw size={16} />
+            <span>Reset</span>
+          </button>
+        )}
 
-        <button
-          className={`nav-tab ${activeTab === 'algorithms' ? 'active' : ''}`}
-          onClick={() => onTabChange && onTabChange('algorithms')}
-        >
-          <Cpu size={16} />
-          <span>Algorithms</span>
-        </button>
-      </nav>
+        {onSelectAlgorithm && (
+          <div className="header-algo-dropdown">
+            <Cpu size={16} style={{ color: 'var(--accent-cyan)' }} />
+            <select
+              className="header-select-dropdown"
+              value={activeAlgorithm}
+              onChange={(e) => onSelectAlgorithm(e.target.value)}
+              title="Select Algorithm Mode"
+            >
+              <option value="BFS">BFS Mode (Minimum Moves)</option>
+              <option value="DFS">Perfect Route (Min Cost & Moves)</option>
+              <option value="DIJKSTRA">Dijkstra Mode (Minimum Cost)</option>
+            </select>
+            <ChevronDown size={14} className="dropdown-chevron" />
+          </div>
+        )}
+      </div>
 
-      {/* Right Side Settings Action Button */}
+      {/* Right Settings Action */}
       <div className="header-actions">
-        <button
-          className="btn-settings"
-          onClick={onOpenSettings}
-          title="Open Settings"
-          aria-label="Settings"
-        >
-          <Settings size={18} />
-        </button>
+        {onOpenSettings && (
+          <button className="btn-header-settings" onClick={onOpenSettings} title="Open Game Settings">
+            <Settings size={18} />
+            <span>Settings</span>
+          </button>
+        )}
       </div>
     </header>
   );

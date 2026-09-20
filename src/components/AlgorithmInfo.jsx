@@ -26,7 +26,7 @@ export default function AlgorithmInfo({
     activeAlgorithm === 'BFS'
       ? 'Breadth-First Search (BFS)'
       : activeAlgorithm === 'DFS'
-      ? 'Depth-First Search (DFS)'
+      ? 'Perfect Route (Min Cost & Moves)'
       : "Dijkstra's Algorithm (Weighted)";
 
   return (
@@ -37,7 +37,7 @@ export default function AlgorithmInfo({
           <span className="algo-title">Algorithm: {algoLabel}</span>
         </div>
 
-        {/* Algorithm Selector Pills (BFS vs DFS vs Dijkstra) */}
+        {/* Algorithm Selector Pills (BFS vs Perfect Route vs Dijkstra) */}
         <div className="algo-selector-tabs" title="Switch Graph Solver Algorithm">
           <button
             className={`btn-algo-tab ${activeAlgorithm === 'BFS' ? 'active' : ''}`}
@@ -49,7 +49,7 @@ export default function AlgorithmInfo({
             className={`btn-algo-tab ${activeAlgorithm === 'DFS' ? 'active' : ''}`}
             onClick={() => onSelectAlgorithm && onSelectAlgorithm('DFS')}
           >
-            DFS
+            Perfect Route
           </button>
           <button
             className={`btn-algo-tab ${activeAlgorithm === 'DIJKSTRA' ? 'active' : ''}`}

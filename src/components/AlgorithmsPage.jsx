@@ -3,30 +3,32 @@ import { Zap, GitBranch, Award, Play } from 'lucide-react';
 import '../css/AlgorithmCards.css';
 
 /**
- * Dedicated Algorithms View Component for Arrow Flow.
- * Displays three clean selectable algorithm cards for BFS, DFS, and Dijkstra.
+ * Dedicated Algorithms Mode Selection View Component for Arrow Flow.
+ * Displays three clean selectable algorithm cards representing the DAA concept: BFS, DFS, and Dijkstra.
  */
 export default function AlgorithmsPage({ onSelectAlgoMode }) {
   const cards = [
     {
       id: 'BFS',
       name: 'Breadth-First Search (BFS)',
-      badge: 'Fewest Moves',
+      badge: 'Minimum Moves',
       badgeClass: 'badge-bfs',
       iconClass: 'card-icon-bfs',
       btnClass: 'btn-play-bfs',
       icon: <Zap size={22} />,
-      purpose: 'Find a path connecting Start to Target using the fewest tile moves.',
+      goalLabel: 'Goal: Minimum Moves',
+      purpose: 'Unweighted shortest path. Finds the path from Start to Goal requiring the fewest tile moves (edge = 1).',
     },
     {
       id: 'DFS',
-      name: 'Depth-First Search (DFS)',
-      badge: 'Reachable Paths',
+      name: 'Perfect Route',
+      badge: 'Min Cost & Moves',
       badgeClass: 'badge-dfs',
       iconClass: 'card-icon-dfs',
       btnClass: 'btn-play-dfs',
       icon: <GitBranch size={22} />,
-      purpose: 'Explore all reachable paths and deep branch connections across the grid.',
+      goalLabel: 'Goal: Min Cost & Moves',
+      purpose: 'Calculates both minimum cost and minimum moves. Finds the optimal perfect route balancing path cost and step moves.',
     },
     {
       id: 'DIJKSTRA',
@@ -36,16 +38,17 @@ export default function AlgorithmsPage({ onSelectAlgoMode }) {
       iconClass: 'card-icon-dijkstra',
       btnClass: 'btn-play-dijkstra',
       icon: <Award size={22} />,
-      purpose: 'Find the optimal minimum-cost route considering weighted tile movement (1, 2, 3).',
+      goalLabel: 'Goal: Lowest Cost',
+      purpose: 'Weighted path challenge. Finds the path with the minimum total cost across weighted tile entries (e.g. 1 to 10+).',
     },
   ];
 
   return (
     <div className="algo-cards-container">
       <div className="algo-section-header">
-        <h2 className="algo-section-title">Select Algorithm Mode</h2>
+        <h2 className="algo-section-title">Choose Your Challenge</h2>
         <p className="algo-section-desc">
-          Choose a solver algorithm below to launch and play Arrow Flow in that game mode.
+          Select an algorithm mode below to evaluate and play Arrow Flow under that DAA strategy.
         </p>
       </div>
 
@@ -63,6 +66,9 @@ export default function AlgorithmsPage({ onSelectAlgoMode }) {
               </div>
 
               <h3 className="algo-card-name">{card.name}</h3>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>
+                {card.goalLabel}
+              </span>
               <p className="algo-card-purpose">{card.purpose}</p>
             </div>
 
@@ -71,7 +77,7 @@ export default function AlgorithmsPage({ onSelectAlgoMode }) {
               onClick={() => onSelectAlgoMode && onSelectAlgoMode(card.id)}
             >
               <Play size={16} fill="currentColor" />
-              <span>Play {card.id} Mode</span>
+              <span>Start {card.id === 'DFS' ? 'Perfect Route' : card.id} Mode</span>
             </button>
           </div>
         ))}

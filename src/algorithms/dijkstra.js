@@ -1,44 +1,25 @@
 /**
  * Dijkstra's Shortest Path Algorithm for Arrow Flow
  * 
- * Models the board as a Weighted Directed Graph G = (V, E, w):
- * - Vertices V: Each valid grid tile coordinate ("row-col")
- * - Directed Edges E: Outgoing arrow directions connecting adjacent tiles
- * - Edge Weight w: Movement cost of entering the destination tile (1, 2, or 3)
- * 
- * Computes the absolute minimum-cost path from Start to Target.
+ * Weighted path challenge.
+ * Each tile has an entry cost (1 to 8+).
+ * Computes path metrics for current arrows and true optimal minimum cost for full board.
+ * Includes loop guards on path reconstruction to prevent browser freezes.
  */
 
-import { buildGraphFromGrid } from './bfs';
+import { buildGraphFromGrid, buildFullGridGraph } from './graph';
 
-/**
- * Executes Dijkstra's algorithm to find the minimum-cost path from Start to Target.
- * 
- * @param {Array<Array<Object>>} grid 2D matrix of tile objects
- * @param {Object} startPos Starting coordinate { row: 0, col: 0 }
- * @param {Object} targetPos Target coordinate { row, col }
- * @returns {Object} { isReachable: boolean, path: Array<{row, col}>, pathSet: Set<string>, optimalCost: number, visitedCount: number, nodesExplored: string[] }
- */
-export function solveDijkstra(
-  grid,
-  startPos = { row: 0, col: 0 },
-  targetPos = { row: 4, col: 4 }
-) {
+function runDijkstraOnGraph(graph, grid, startPos, targetPos) {
   const rows = grid.length;
   const cols = grid[0].length;
   const startKey = `${startPos.row}-${startPos.col}`;
   const targetKey = `${targetPos.row}-${targetPos.col}`;
 
-  // 1. Build Adjacency List graph representation (shared graph builder)
-  const graph = buildGraphFromGrid(grid);
-
-  // 2. Initialize Dijkstra data structures
-  const distMap = new Map();     // Distance map: vertexKey -> min path cost
-  const parentMap = new Map();   // Parent pointers for shortest path reconstruction
-  const visited = new Set();     // Settled vertices set
+  const distMap = new Map();
+  const parentMap = new Map();
+  const visited = new Set();
   const nodesExplored = [];
 
-  // Initialize all vertex distances to Infinity, and Start to 0
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       distMap.set(`${r}-${c}`, Infinity);
@@ -48,9 +29,7 @@ export function solveDijkstra(
 
   let targetReached = false;
 
-  // 3. Main Dijkstra Loop: Extract unvisited vertex with minimum tentative distance
   while (visited.size < rows * cols) {
-    // Find unvisited vertex with smallest distMap value
     let currentKey = null;
     let minDistance = Infinity;
 
@@ -61,53 +40,43 @@ export function solveDijkstra(
       }
     }
 
-    // Stop if no reachable unvisited vertices remain
     if (!currentKey || minDistance === Infinity) {
       break;
     }
 
-    // Mark current vertex as visited/settled
     visited.add(currentKey);
     nodesExplored.push(currentKey);
 
-    // Stop if Target is settled
     if (currentKey === targetKey) {
       targetReached = true;
       break;
     }
 
-    // Relax all outgoing neighbors
     const neighbors = graph.get(currentKey) || [];
-    for (const neighborKey of neighbors) {
-      if (!visited.has(neighborKey)) {
-        // Get movement cost of the destination tile
-        const [nrStr, ncStr] = neighborKey.split('-');
-        const nr = parseInt(nrStr, 10);
-        const nc = parseInt(ncStr, 10);
-        const tileCost = grid[nr]?.[nc]?.cost || 1;
+    for (const neighbor of neighbors) {
+      if (!visited.has(neighbor.key)) {
+        const newDist = distMap.get(currentKey) + neighbor.cost;
 
-        // Calculate tentative distance
-        const newDist = distMap.get(currentKey) + tileCost;
-
-        // If a shorter path to neighbor is found, update distance and parent
-        if (newDist < distMap.get(neighborKey)) {
-          distMap.set(neighborKey, newDist);
-          parentMap.set(neighborKey, currentKey);
+        if (newDist < distMap.get(neighbor.key)) {
+          distMap.set(neighbor.key, newDist);
+          parentMap.set(neighbor.key, currentKey);
         }
       }
     }
   }
 
-  // 4. Reconstruct optimal minimum-cost path if Target was reached
   const path = [];
   const pathSet = new Set();
-  let optimalCost = 0;
+  let cost = 0;
 
   if (targetReached) {
-    optimalCost = distMap.get(targetKey);
+    cost = distMap.get(targetKey);
     let curr = targetKey;
+    const visitedCycle = new Set();
 
-    while (curr) {
+    // Safeguarded path reconstruction loop prevents infinite loops
+    while (curr && !visitedCycle.has(curr)) {
+      visitedCycle.add(curr);
       const [rStr, cStr] = curr.split('-');
       path.unshift({ row: parseInt(rStr, 10), col: parseInt(cStr, 10) });
       pathSet.add(curr);
@@ -116,12 +85,50 @@ export function solveDijkstra(
   }
 
   return {
-    isReachable: targetReached,
+    targetReached,
     path,
     pathSet,
-    optimalCost: targetReached ? optimalCost : Infinity,
-    visitedCount: visited.size,
+    cost,
+    visited,
     nodesExplored,
-    totalVertices: rows * cols,
+  };
+}
+
+/**
+ * Executes Dijkstra's algorithm to find minimum-cost path.
+ * 
+ * @param {Array<Array<Object>>} grid 2D matrix of tile objects
+ * @param {Object} startPos Starting coordinate { row: 0, col: 0 }
+ * @param {Object} targetPos Target coordinate { row, col }
+ * @returns {Object} { algorithm: 'DIJKSTRA', goalLabel: 'Minimum Total Cost', isReachable: boolean, path: Array, optimalCost: number, optimalBoardCost: number, nodesExplored: Array }
+ */
+export function solveDijkstra(
+  grid,
+  initialGrid = null,
+  startPos = { row: 0, col: 0 },
+  targetPos = { row: 4, col: 4 }
+) {
+  const baseGrid = initialGrid || grid;
+  const currentGraph = buildGraphFromGrid(grid);
+  const currentRes = runDijkstraOnGraph(currentGraph, grid, startPos, targetPos);
+
+  const fullGraph = buildFullGridGraph(baseGrid);
+  const optimalRes = runDijkstraOnGraph(fullGraph, baseGrid, startPos, targetPos);
+
+  return {
+    algorithm: 'DIJKSTRA',
+    goalLabel: 'Minimum Total Cost',
+    description: 'Finds the path with the lowest total cost.',
+    isReachable: currentRes.targetReached,
+    path: currentRes.path,
+    pathSet: currentRes.pathSet,
+    currentCost: currentRes.targetReached ? currentRes.cost : Infinity,
+    optimalCost: optimalRes.targetReached ? optimalRes.cost : Infinity,
+    optimalBoardCost: optimalRes.targetReached ? optimalRes.cost : Infinity,
+    optimalBoardMoves: optimalRes.targetReached ? Math.max(0, optimalRes.path.length - 1) : 0,
+    moves: currentRes.targetReached ? Math.max(0, currentRes.path.length - 1) : 0,
+    visitedCount: currentRes.nodesExplored.length,
+    nodesExplored: currentRes.nodesExplored,
+    totalVertices: grid.length * grid[0].length,
   };
 }

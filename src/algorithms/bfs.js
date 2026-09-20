@@ -1,109 +1,78 @@
 /**
- * Breadth-First Search (BFS) Algorithm for Arrow Flow
+ * Breadth-First Search (BFS) / Shortest-Move Algorithm for Arrow Flow
  * 
- * Models the Arrow Flow board as a directed graph G = (V, E):
- * - Vertices V: Each valid grid tile coordinate ("row-col")
- * - Directed Edges E: Outgoing arrow directions connecting adjacent tiles
- * 
- * Traverses graph using a queue (FIFO) to determine if Target is reachable from Start,
- * returning the shortest path and graph search statistics. Independent from React UI.
+ * Calculates total moves including both tile rotation actions and path step transitions.
+ * Computes path metrics for current arrows and true minimum moves (rotations + steps) for full board.
  */
 
-import { DIRECTION_VECTORS } from '../utils/constants';
-import { isValidCoordinate } from '../utils/helpers';
+import { buildGraphFromGrid, buildFullGridGraph } from './graph';
 
-/**
- * Converts a 2D grid matrix into an Adjacency List graph representation.
- * @param {Array<Array<Object>>} grid 2D matrix of tile objects
- * @returns {Map<string, string[]>} Graph adjacency list (vertex -> array of neighbor vertices)
- */
-export function buildGraphFromGrid(grid) {
-  const graph = new Map();
-  const rows = grid.length;
-  const cols = grid[0].length;
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const vertexKey = `${r}-${c}`;
-      const neighbors = [];
-      const tile = grid[r][c];
-
-      // If tile has an arrow direction, compute its directed outgoing edge
-      if (tile && tile.arrow) {
-        const vector = DIRECTION_VECTORS[tile.arrow];
-        if (vector) {
-          const nr = r + vector.r;
-          const nc = c + vector.c;
-          if (isValidCoordinate(nr, nc, rows, cols)) {
-            neighbors.push(`${nr}-${nc}`);
-          }
-        }
-      }
-
-      graph.set(vertexKey, neighbors);
-    }
-  }
-
-  return graph;
-}
-
-/**
- * Executes Breadth-First Search (BFS) to determine target reachability and shortest path.
- * 
- * @param {Array<Array<Object>>} grid 2D matrix of tile objects
- * @param {Object} startPos Starting coordinate { row: 0, col: 0 }
- * @param {Object} targetPos Target coordinate { row, col }
- * @returns {Object} { isReachable: boolean, path: Array<{row, col}>, pathSet: Set<string>, visitedCount: number, nodesExplored: string[] }
- */
-export function solveBFS(
-  grid,
-  startPos = { row: 0, col: 0 },
-  targetPos = { row: 4, col: 4 }
-) {
+function runShortestMoveGraph(graph, grid, startPos, targetPos, isFullGraph = false) {
   const rows = grid.length;
   const cols = grid[0].length;
   const startKey = `${startPos.row}-${startPos.col}`;
   const targetKey = `${targetPos.row}-${targetPos.col}`;
 
-  // 1. Build Adjacency List graph representation
-  const graph = buildGraphFromGrid(grid);
-
-  // 2. Initialize BFS data structures
-  const queue = [startKey];
-  const visited = new Set([startKey]);
-  const parentMap = new Map(); // Tracks parent pointers for shortest path reconstruction
+  const distMap = new Map();
+  const parentMap = new Map();
+  const visited = new Set();
   const nodesExplored = [];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      distMap.set(`${r}-${c}`, Infinity);
+    }
+  }
+  distMap.set(startKey, 0);
 
   let targetFound = false;
 
-  // 3. BFS Traversal Loop (FIFO Queue)
-  while (queue.length > 0) {
-    const currentKey = queue.shift();
+  while (visited.size < rows * cols) {
+    let currentKey = null;
+    let minDist = Infinity;
+
+    for (const [key, d] of distMap.entries()) {
+      if (!visited.has(key) && d < minDist) {
+        minDist = d;
+        currentKey = key;
+      }
+    }
+
+    if (!currentKey || minDist === Infinity) {
+      break;
+    }
+
+    visited.add(currentKey);
     nodesExplored.push(currentKey);
 
-    // Stop if target is reached
     if (currentKey === targetKey) {
       targetFound = true;
       break;
     }
 
     const neighbors = graph.get(currentKey) || [];
-    for (const neighborKey of neighbors) {
-      if (!visited.has(neighborKey)) {
-        visited.add(neighborKey);
-        parentMap.set(neighborKey, currentKey);
-        queue.push(neighborKey);
+    for (const neighbor of neighbors) {
+      if (!visited.has(neighbor.key)) {
+        const moveWeight = isFullGraph ? (neighbor.moveWeight !== undefined ? neighbor.moveWeight : 1) : 1;
+        const newDist = distMap.get(currentKey) + moveWeight;
+
+        if (newDist < distMap.get(neighbor.key)) {
+          distMap.set(neighbor.key, newDist);
+          parentMap.set(neighbor.key, currentKey);
+        }
       }
     }
   }
 
-  // 4. Reconstruct shortest path if target was reached
   const path = [];
   const pathSet = new Set();
 
   if (targetFound) {
     let curr = targetKey;
-    while (curr) {
+    const visitedCycle = new Set();
+
+    while (curr && !visitedCycle.has(curr)) {
+      visitedCycle.add(curr);
       const [rStr, cStr] = curr.split('-');
       path.unshift({ row: parseInt(rStr, 10), col: parseInt(cStr, 10) });
       pathSet.add(curr);
@@ -112,12 +81,48 @@ export function solveBFS(
   }
 
   return {
-    isReachable: targetFound,
+    targetFound,
     path,
     pathSet,
-    visitedCount: visited.size,
+    totalMoves: targetFound ? distMap.get(targetKey) : Infinity,
+    visited,
     nodesExplored,
     totalVertices: rows * cols,
-    graphSize: graph.size,
+  };
+}
+
+/**
+ * Executes Breadth-First Search (BFS) to find minimum total-move path (rotations + steps).
+ * 
+ * @param {Array<Array<Object>>} grid 2D matrix of tile objects
+ * @param {Object} startPos Starting coordinate { row: 0, col: 0 }
+ * @param {Object} targetPos Target coordinate { row, col }
+ * @returns {Object} Algorithm result object
+ */
+export function solveBFS(
+  grid,
+  initialGrid = null,
+  startPos = { row: 0, col: 0 },
+  targetPos = { row: 4, col: 4 }
+) {
+  const baseGrid = initialGrid || grid;
+  const currentGraph = buildGraphFromGrid(grid);
+  const currentRes = runShortestMoveGraph(currentGraph, grid, startPos, targetPos, false);
+
+  const fullGraph = buildFullGridGraph(baseGrid);
+  const optimalRes = runShortestMoveGraph(fullGraph, baseGrid, startPos, targetPos, true);
+
+  return {
+    algorithm: 'BFS',
+    goalLabel: 'Minimum Moves',
+    description: 'Finds the path requiring the fewest total moves (rotations + steps).',
+    isReachable: currentRes.targetFound,
+    path: currentRes.path,
+    pathSet: currentRes.pathSet,
+    moves: currentRes.targetFound ? Math.max(0, currentRes.path.length - 1) : 0,
+    optimalBoardMoves: optimalRes.targetFound ? optimalRes.totalMoves : 0,
+    visitedCount: currentRes.visited.size,
+    nodesExplored: currentRes.nodesExplored,
+    totalVertices: grid.length * grid[0].length,
   };
 }

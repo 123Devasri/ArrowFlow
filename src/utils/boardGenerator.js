@@ -2,7 +2,7 @@
  * Arrow Flow Puzzle Generator & Deterministic Daily Generator
  * 
  * Generates guaranteed solvable puzzle boards across Easy (4x4), Medium (5x5),
- * and Hard (6x6) difficulties with weighted tile movement costs (1, 2, 3).
+ * and Hard (6x6) difficulties with negative & positive movement entry costs (-3 to +5).
  * Includes deterministic daily puzzle generator seeded by calendar date.
  */
 
@@ -66,17 +66,20 @@ export function getDailyPuzzleNumber(dateStr = getTodayDateStr()) {
 }
 
 function getRandomInt(min, max, prng = Math.random) {
-  return Math.floor(prng() * (max - min + 1)) + min;
+  const pFunc = typeof prng === 'function' ? prng : Math.random;
+  return Math.floor(pFunc() * (max - min + 1)) + min;
 }
 
 function getRandomElement(arr, prng = Math.random) {
-  return arr[Math.floor(prng() * arr.length)];
+  const pFunc = typeof prng === 'function' ? prng : Math.random;
+  return arr[Math.floor(pFunc() * arr.length)];
 }
 
 /**
  * Generates a random solution path tailored to difficulty complexity.
  */
 function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyKey = 'MEDIUM', prng = Math.random) {
+  const pFunc = typeof prng === 'function' ? prng : Math.random;
   const path = [startPos];
   const visited = new Set([`${startPos.row}-${startPos.col}`]);
   let current = startPos;
@@ -112,14 +115,11 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
 
       let nr = current.row;
       let nc = current.col;
-      let dir = DIRECTIONS.RIGHT;
 
-      if (dr !== 0 && prng() < 0.6) {
+      if (dr !== 0 && pFunc() < 0.6) {
         nr += dr;
-        dir = dr > 0 ? DIRECTIONS.DOWN : DIRECTIONS.UP;
       } else if (dc !== 0) {
         nc += dc;
-        dir = dc > 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
       } else {
         break;
       }
@@ -133,13 +133,13 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
     if (isEasy) {
       neighbors.sort((a, b) => a.dist - b.dist);
     } else if (isHard) {
-      if (prng() < 0.5 && neighbors.length > 1) {
+      if (pFunc() < 0.5 && neighbors.length > 1) {
         neighbors.sort((a, b) => b.dist - a.dist);
       } else {
-        neighbors.sort((a, b) => a.dist - b.dist + (prng() - 0.5));
+        neighbors.sort((a, b) => a.dist - b.dist + (pFunc() - 0.5));
       }
     } else {
-      neighbors.sort((a, b) => a.dist - b.dist + (prng() - 0.5));
+      neighbors.sort((a, b) => a.dist - b.dist + (pFunc() - 0.5));
     }
 
     const nextStep = neighbors[0];
@@ -152,20 +152,31 @@ function generateRandomSolutionPath(rows, cols, startPos, targetPos, difficultyK
 }
 
 /**
- * Generates a complete solvable grid matrix based on difficulty setting.
+ * Generates a complete solvable grid matrix based on difficulty setting and algorithm mode.
+ * Supports negative and positive movement entry costs (-3 to +5).
  * 
  * @param {number} rows Number of grid rows
  * @param {number} cols Number of grid columns
  * @param {string} difficultyKey 'EASY', 'MEDIUM', or 'HARD'
- * @param {Function} prng Optional custom random function
+ * @param {string|Function} modeKeyOrPrng Algorithm mode string or PRNG function
+ * @param {Function} customPrng Optional custom random function
  * @returns {Array<Array<Object>>} 2D array of initialized tile objects
  */
 export function generateSolvableGrid(
   rows = GRID_ROWS,
   cols = GRID_COLS,
   difficultyKey = 'MEDIUM',
-  prng = Math.random
+  modeKeyOrPrng = 'BFS',
+  customPrng = null
 ) {
+  let prng = Math.random;
+
+  if (typeof modeKeyOrPrng === 'function') {
+    prng = modeKeyOrPrng;
+  } else if (typeof modeKeyOrPrng === 'string' && typeof customPrng === 'function') {
+    prng = customPrng;
+  }
+
   const startPos = { row: 0, col: 0 };
   const targetPos = { row: rows - 1, col: cols - 1 };
 
@@ -187,7 +198,10 @@ export function generateSolvableGrid(
     solutionDirections.set(`${curr.row}-${curr.col}`, dir);
   }
 
-  // 2. Build grid matrix with weighted movement costs
+  // Cost pool supporting any positive movement entry cost (1 to 10)
+  const possibleCosts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+  // 2. Build grid matrix with synchronized logical arrow directions & visual rotation degrees
   const grid = [];
   for (let r = 0; r < rows; r++) {
     const row = [];
@@ -199,8 +213,7 @@ export function generateSolvableGrid(
       let initialArrow = null;
       let rotationDegrees = 0;
 
-      const randCost = prng();
-      const tileCost = isStart || isTarget ? 1 : randCost < 0.5 ? 1 : randCost < 0.8 ? 2 : 3;
+      const tileCost = isStart || isTarget ? 1 : getRandomElement(possibleCosts, prng);
 
       if (isStart) {
         initialArrow = solutionDirections.get(key) || DIRECTIONS.RIGHT;
@@ -211,9 +224,7 @@ export function generateSolvableGrid(
       } else {
         const randomDir = getRandomElement(DIRECTION_KEYS, prng);
         initialArrow = randomDir;
-
-        const randomRotations = getRandomInt(0, 3, prng);
-        rotationDegrees = (DIRECTION_ROTATION[randomDir] + randomRotations * 90) % 360;
+        rotationDegrees = DIRECTION_ROTATION[randomDir] || 0;
       }
 
       row.push({
@@ -242,5 +253,5 @@ export function generateSolvableGrid(
 export function generateDailyGrid(dateStr = getTodayDateStr()) {
   const seed = hashDateString(dateStr);
   const prng = createPRNG(seed);
-  return generateSolvableGrid(5, 5, 'MEDIUM', prng);
+  return generateSolvableGrid(5, 5, 'MEDIUM', 'BFS', prng);
 }

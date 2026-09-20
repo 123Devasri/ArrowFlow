@@ -8,66 +8,77 @@ import './css/App.css';
 
 /**
  * Main Arrow Flow Application Component.
- * Integrates top header navigation, tab views (Play, Daily Puzzle, Algorithms), and Settings modal.
+ * Integrates top header navigation, tab views (Play, Daily Puzzle, Algorithms), and right-side Settings Drawer.
  */
 export default function App() {
   // Navigation tab state ('play' | 'daily' | 'algorithms')
   const [activeTab, setActiveTab] = useState('play');
   // Selected algorithm mode ('BFS' | 'DFS' | 'DIJKSTRA')
   const [selectedAlgoMode, setSelectedAlgoMode] = useState('BFS');
-  // Settings modal visibility state
+  // Settings drawer visibility state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  // Timer toggle setting
+  // Header game control callbacks registered by active GameBoard
+  const [headerControls, setHeaderControls] = useState({ newGame: null, reset: null });
+
+  // Settings preferences state
+  const [difficultyKey, setDifficultyKey] = useState('MEDIUM');
   const [isTimerEnabled, setIsTimerEnabled] = useState(true);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const [isAnimationsEnabled, setIsAnimationsEnabled] = useState(true);
 
   /**
-   * Handles selecting an algorithm card from the Algorithms section:
-   * Sets the active algorithm solver and switches tab immediately to Play mode.
+   * Clears daily puzzle localStorage progress
    */
-  const handleSelectAlgoMode = (mode) => {
-    setSelectedAlgoMode(mode);
-    setActiveTab('play');
+  const handleResetProgress = () => {
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('arrowflow_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      alert('Daily progress cleared!');
+    } catch (e) {
+      console.error('Error clearing progress', e);
+    }
   };
 
   return (
     <div className="app-container">
       <Header
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+        activeAlgorithm={selectedAlgoMode}
+        onSelectAlgorithm={setSelectedAlgoMode}
+        onNewGame={headerControls.newGame}
+        onReset={headerControls.reset}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       <main className="main-content">
-        {activeTab === 'play' && (
-          <GameBoard
-            selectedAlgoMode={selectedAlgoMode}
-            isTimerEnabled={isTimerEnabled}
-          />
-        )}
-
-        {activeTab === 'daily' && (
-          <DailyPuzzle
-            isTimerEnabled={isTimerEnabled}
-            onReturnToPlay={() => setActiveTab('play')}
-          />
-        )}
-
-        {activeTab === 'algorithms' && (
-          <AlgorithmsPage
-            onSelectAlgoMode={handleSelectAlgoMode}
-          />
-        )}
+        <GameBoard
+          difficultyKey={difficultyKey}
+          selectedAlgoMode={selectedAlgoMode}
+          isTimerEnabled={isTimerEnabled}
+          isAnimationsEnabled={isAnimationsEnabled}
+          isSoundEnabled={isSoundEnabled}
+          onRegisterControls={setHeaderControls}
+        />
       </main>
 
       <footer className="app-footer">
         <p>Arrow Flow Engine — Built with <span>React</span> + <span>Vite</span></p>
       </footer>
 
-      {/* Settings Modal Dialog */}
+      {/* Right-Side Settings Drawer Panel */}
       <SettingsModal
         isOpen={isSettingsOpen}
+        difficultyKey={difficultyKey}
         isTimerEnabled={isTimerEnabled}
+        isSoundEnabled={isSoundEnabled}
+        isAnimationsEnabled={isAnimationsEnabled}
+        onSelectDifficulty={setDifficultyKey}
         onToggleTimer={() => setIsTimerEnabled((prev) => !prev)}
+        onToggleSound={() => setIsSoundEnabled((prev) => !prev)}
+        onToggleAnimations={() => setIsAnimationsEnabled((prev) => !prev)}
+        onResetProgress={handleResetProgress}
         onClose={() => setIsSettingsOpen(false)}
       />
     </div>
