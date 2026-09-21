@@ -112,7 +112,7 @@ export default function GameBoard({
 
   const isWon = flowResult.reachedTarget;
   const playerSteps = flowResult.path.length > 0 ? flowResult.path.length - 1 : 0;
-  const playerTotalMoves = moveCount + (isWon ? playerSteps : 0);
+  const playerTotalMoves = moveCount + playerSteps;
 
   // Calculate player's live path cost accumulated along their current path prefix
   const playerPathCost = useMemo(() => {
